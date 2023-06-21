@@ -60,7 +60,6 @@ class Encoder(nn.Module):
             get_sinusoid_encoding_table(n_position, d_word_vec).unsqueeze(0),
             requires_grad=False,
         )
-
         self.layer_stack = nn.ModuleList(
             [
                 FFTBlock(

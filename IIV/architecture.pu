@@ -1,0 +1,13 @@
+@startuml
+
+class IIVMiner {
+    mine()
+}
+
+class TrainTask {
+    main()
+}
+
+TrainTask <-- IIVMiner
+
+@enduml
