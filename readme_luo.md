@@ -20,6 +20,20 @@
 - write to meta data 
     id | speaker | phone | text
 
+## Data format
+- original_data (Any Format)
+
+- raw_path   <- Get by prepare_align
+  - speaker1
+    - wav1.wav
+    - wav1.lab
+  - ...
+
+- preprocessed_path   <- Get by preprocess
+  - Textgrid
+    - speaker1
+      - wav1.TextGrid
+
 
 
 In total, 62 parameters are contained in the Geneva
