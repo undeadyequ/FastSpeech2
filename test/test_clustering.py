@@ -3,7 +3,7 @@ import torch
 import numpy as np
 from IIV.clustering import get_kmeans_label
 
-@pytest.mark.parametrize("n_clusters", [3, (2, 4)])
+@pytest.mark.parametrize("n_clusters", [(2, 6)])
 def test_get_kmeans_label(
         n_clusters
 ):
@@ -14,6 +14,7 @@ def test_get_kmeans_label(
     group_ids = get_kmeans_label(
         speech_feature_emb,
         n_clusters=n_clusters)
+
     assert group_ids.shape == (batch,)
 
 

@@ -38,7 +38,7 @@ def get_kmeans_label(
         groups_ids = []
         for k in range(n_clusters[0], n_clusters[1] + 1):
             kmeans = KMeans(
-                n_clusters=n_clusters
+                n_clusters=k
                 # random_state=random_state,
                 # n_init=n_init
             ).fit(speech_feature_emb)
