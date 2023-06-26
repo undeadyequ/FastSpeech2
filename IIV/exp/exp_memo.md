@@ -152,3 +152,46 @@ Epoch 6 Iteration 20: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and 
 Epoch 6 Iteration 30: Loss = 0.12(inter:0.12, intra:0.00), Number of inter- and intra-triplets = 4243181, 0
 best acc: 0.6, save to best_iiv_model.pt
 
+
+## New group (w = 0.7)
+
+Epoch 1 Iteration 0: Loss = 0.16(inter:0.18, intra:0.12->0.20,0.0,0.19,0.0,0.20, Number of inter- and intra-triplets = 11237374, 21598_0_120343_0_30829
+Epoch 1 Iteration 10: Loss = 0.21(inter:0.12, intra:0.42->0.72,0.0,0.71,0.0,0.66, Number of inter- and intra-triplets = 3269429, 13369_0_47210_0_3041
+Epoch 1 Iteration 20: Loss = 0.18(inter:0.12, intra:0.32->0.54,0.0,0.54,0.0,0.53, Number of inter- and intra-triplets = 3478139, 4786_0_47283_0_9837
+Epoch 1 Iteration 30: Loss = 0.17(inter:0.12, intra:0.30->0.50,0.0,0.49,0.0,0.49, Number of inter- and intra-triplets = 4278858, 26114_0_66706_0_6998
+best acc: 0.1, save to best_iiv_model.pt
+Epoch 2 Iteration 0: Loss = 0.18(inter:0.12, intra:0.33->0.54,0.0,0.56,0.0,0.54, Number of inter- and intra-triplets = 3874248, 31060_0_54221_0_6111
+Epoch 2 Iteration 10: Loss = 0.16(inter:0.12, intra:0.27->0.45,0.0,0.46,0.0,0.43, Number of inter- and intra-triplets = 4608396, 20919_0_43846_0_7842
+Epoch 2 Iteration 20: Loss = 0.18(inter:0.11, intra:0.36->0.59,0.0,0.60,0.0,0.61, Number of inter- and intra-triplets = 3402052, 14658_0_95871_0_4217
+Epoch 2 Iteration 30: Loss = 0.18(inter:0.11, intra:0.34->0.56,0.0,0.57,0.0,0.57, Number of inter- and intra-triplets = 3504339, 18853_0_48437_0_14788
+best acc: 0.2, save to best_iiv_model.pt
+Epoch 3 Iteration 0: Loss = 0.21(inter:0.11, intra:0.46->0.57,0.0,0.58,0.52,0.59, Number of inter- and intra-triplets = 3005826, 23704_0_45897_1791_16674
+Epoch 3 Iteration 10: Loss = 0.18(inter:0.11, intra:0.32->0.53,0.0,0.54,0.0,0.53, Number of inter- and intra-triplets = 4114127, 18338_0_56772_0_17362
+Epoch 3 Iteration 20: Loss = 0.17(inter:0.11, intra:0.31->0.49,0.0,0.50,0.0,0.53, Number of inter- and intra-triplets = 4418910, 12886_0_90112_0_4117
+Epoch 3 Iteration 30: Loss = 0.18(inter:0.11, intra:0.34->0.55,0.0,0.54,0.0,0.58, Number of inter- and intra-triplets = 3595615, 12526_0_72883_0_4403
+best acc: 0.30000000000000004, save to best_iiv_model.pt
+Epoch 4 Iteration 0: Loss = 0.18(inter:0.11, intra:0.36->0.58,0.0,0.58,0.0,0.60, Number of inter- and intra-triplets = 3496100, 26154_0_82128_0_14953
+Epoch 4 Iteration 10: Loss = 0.17(inter:0.11, intra:0.32->0.55,0.0,0.51,0.0,0.50, Number of inter- and intra-triplets = 3977006, 13330_0_71173_0_40010
+Epoch 4 Iteration 20: Loss = 0.18(inter:0.11, intra:0.33->0.55,0.0,0.56,0.0,0.54, Number of inter- and intra-triplets = 3392794, 20595_0_42396_0_11967
+Epoch 4 Iteration 30: Loss = 0.18(inter:0.11, intra:0.36->0.61,0.0,0.60,0.0,0.56, Number of inter- and intra-triplets = 3082396, 29020_0_93998_0_10505
+best acc: 0.4, save to best_iiv_model.pt
+Epoch 5 Iteration 0: Loss = 0.17(inter:0.11, intra:0.33->0.54,0.0,0.56,0.0,0.53, Number of inter- and intra-triplets = 3551547, 23222_0_49322_0_17822
+Epoch 5 Iteration 10: Loss = 0.17(inter:0.11, intra:0.32->0.53,0.0,0.52,0.0,0.53, Number of inter- and intra-triplets = 3348796, 22535_0_76238_0_2854
+Epoch 5 Iteration 20: Loss = 0.19(inter:0.11, intra:0.39->0.64,0.0,0.63,0.0,0.66, Number of inter- and intra-triplets = 2801114, 22585_0_83403_0_11785
+Epoch 5 Iteration 30: Loss = 0.19(inter:0.11, intra:0.37->0.64,0.0,0.60,0.0,0.61, Number of inter- and intra-triplets = 2975577, 19554_0_48908_0_12782
+best acc: 0.5, save to best_iiv_model.pt
+Epoch 6 Iteration 0: Loss = 0.19(inter:0.11, intra:0.37->0.62,0.0,0.63,0.0,0.57, Number of inter- and intra-triplets = 3186248, 12473_0_50390_0_10965
+Epoch 6 Iteration 10: Loss = 0.18(inter:0.10, intra:0.34->0.55,0.0,0.57,0.0,0.58, Number of inter- and intra-triplets = 3207737, 27192_0_63590_0_21796
+Epoch 6 Iteration 20: Loss = 0.16(inter:0.11, intra:0.29->0.49,0.0,0.48,0.0,0.48, Number of inter- and intra-triplets = 4633081, 27860_0_106636_0_13776
+Epoch 6 Iteration 30: Loss = 0.17(inter:0.11, intra:0.33->0.51,0.0,0.57,0.0,0.58, Number of inter- and intra-triplets = 3584798, 23843_0_65101_0_18974
+best acc: 0.6, save to best_iiv_model.pt
+Epoch 7 Iteration 0: Loss = 0.19(inter:0.10, intra:0.38->0.63,0.0,0.62,0.0,0.62, Number of inter- and intra-triplets = 2723081, 27732_0_60275_0_12425
+Epoch 7 Iteration 10: Loss = 0.18(inter:0.10, intra:0.35->0.56,0.0,0.60,0.0,0.60, Number of inter- and intra-triplets = 2858957, 26880_0_79539_0_4634
+Epoch 7 Iteration 20: Loss = 0.18(inter:0.10, intra:0.37->0.63,0.0,0.62,0.0,0.59, Number of inter- and intra-triplets = 2545893, 16491_0_63113_0_14130
+Epoch 7 Iteration 30: Loss = 0.17(inter:0.10, intra:0.31->0.51,0.0,0.52,0.0,0.51, Number of inter- and intra-triplets = 3956288, 21272_0_99660_0_7570
+best acc: 0.7, save to best_iiv_model.pt
+Epoch 8 Iteration 0: Loss = 0.18(inter:0.10, intra:0.35->0.58,0.0,0.56,0.0,0.61, Number of inter- and intra-triplets = 3003139, 18197_0_81951_0_11317
+Epoch 8 Iteration 10: Loss = 0.14(inter:0.10, intra:0.23->0.60,0.0,0.57,0.0,0.0, Number of inter- and intra-triplets = 3279332, 26498_0_70719_0_0
+Epoch 8 Iteration 20: Loss = 0.16(inter:0.10, intra:0.28->0.47,0.0,0.48,0.0,0.46, Number of inter- and intra-triplets = 3616442, 16062_0_73374_0_16922
+Epoch 8 Iteration 30: Loss = 0.17(inter:0.10, intra:0.34->0.57,0.0,0.55,0.0,0.56, Number of inter- and intra-triplets = 2937035, 28178_0_57102_0_19375
+best acc: 0.7999999999999999, save to best_iiv_model.pt

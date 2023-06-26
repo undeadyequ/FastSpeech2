@@ -13,7 +13,7 @@ from wavnet_dense import WaveNetDense
 from wavnet_dense import Net
 from iiv_miner import IIVMiner
 from custom_dataset import IIVDataset
-from visualize import show_vis, show_iiv_distance
+from visualize import show_vis_test, show_iiv_distance
 from typing import Collection
 from typing import Dict
 from typing import List
@@ -23,7 +23,7 @@ from typing import Union
 from collate_fn import CommonCollateFn
 
 ### Hyperparamter
-w = 0
+w = 0.5
 intra_loss_weight_each_emo = {
     "0": 0.3,
     "1": 0.4
@@ -193,7 +193,7 @@ if __name__ == '__main__':
     # 1. initiate a FastTTS train
     # initiate_train()
     # 2. Initiate a iiv train
-    base_dir = "/home/rosen/project/FG-transformer-TTS/"
+    base_dir = "/home/rosen/project/FastSpeech2/"
     emo_emb_dir = base_dir + "ESD/emo_reps"
     psd_emb_dir = base_dir + "ESD/psd_reps"
     idx_emo_dict = base_dir + "ESD/metadata_new.json"
