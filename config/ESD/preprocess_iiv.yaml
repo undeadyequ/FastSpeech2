@@ -30,3 +30,6 @@ preprocessing:
   energy:
     feature: "phoneme_level" # support 'phoneme_level' or 'frame_level'
     normalization: True
+
+style_emb:
+  exist: True

@@ -26,6 +26,12 @@ class Dataset(Dataset):
         self.sort = sort
         self.drop_last = drop_last
 
+        if "style_emb" in preprocess_config.keys():
+            if preprocess_config["style_emb"]["exist"]:
+                self.style_embed = True
+        else:
+            self.style_embed = False
+
     def __len__(self):
         return len(self.text)
 
@@ -59,7 +65,6 @@ class Dataset(Dataset):
             "{}-duration-{}.npy".format(speaker, basename),
         )
         duration = np.load(duration_path)
-
         sample = {
             "id": basename,
             "speaker": speaker_id,
@@ -70,6 +75,14 @@ class Dataset(Dataset):
             "energy": energy,
             "duration": duration,
         }
+
+        if self.style_embed:
+            iiv_path = os.path.join(
+                self.preprocessed_path,
+                "iiv_reps",
+                "{}.npy".format(basename),
+            )
+            sample["iiv"] = np.load(iiv_path)
 
         return sample
 

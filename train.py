@@ -170,23 +170,32 @@ def main(args, configs):
 
 
 if __name__ == "__main__":
+    config_dir = "/home/rosen/project/FastSpeech2/config/ESD"
     parser = argparse.ArgumentParser()
     parser.add_argument("--restore_step", type=int, default=0)
     parser.add_argument(
         "-p",
         "--preprocess_config",
         type=str,
-        required=True,
+        #required=True,
         help="path to preprocess.yaml",
+        default=config_dir + "/preprocess_iiv.yaml",
+        #default=config_dir + "/preprocess.yaml"
     )
     parser.add_argument(
-        "-m", "--model_config", type=str, required=True, help="path to model.yaml"
+        "-m", "--model_config", type=str,
+        #required=True,
+        help="path to model.yaml",
+        default=config_dir + "/model_fastspeechIIV.yaml"
+        #default=config_dir + "/model.yaml"
     )
     parser.add_argument(
-        "-t", "--train_config", type=str, required=True, help="path to train.yaml"
+        "-t", "--train_config", type=str,
+        #required=True,
+        help="path to train.yaml",
+        default=config_dir + "/train.yaml"
     )
     args = parser.parse_args()
-
     # Read Config
     preprocess_config = yaml.load(
         open(args.preprocess_config, "r"), Loader=yaml.FullLoader
@@ -194,5 +203,4 @@ if __name__ == "__main__":
     model_config = yaml.load(open(args.model_config, "r"), Loader=yaml.FullLoader)
     train_config = yaml.load(open(args.train_config, "r"), Loader=yaml.FullLoader)
     configs = (preprocess_config, model_config, train_config)
-
     main(args, configs)

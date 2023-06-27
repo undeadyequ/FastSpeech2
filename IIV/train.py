@@ -1,9 +1,6 @@
 import os
-
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 from torchvision import datasets, transforms
 from pytorch_metric_learning import distances, losses, miners, reducers, testers
@@ -21,6 +18,7 @@ from typing import Tuple
 from typing import Union
 ### MNIST code originally from https://github.com/pytorch/examples/blob/master/mnist/main.py ###
 from collate_fn import CommonCollateFn
+from pathlib import Path
 
 ### Hyperparamter
 w = 0.5
@@ -185,8 +183,26 @@ def initiate_iiv_train(emo_emb_dir, psd_emb_dir, idx_emo_dict):
             best_acc = acc
             torch.save(model, model_f)
 
-def get_trained_iiv_emb(ref_emb, trained_model):
-    pass
+def get_trained_iiv_emb(emo_emb_dir, psd_emb_dir, idx_emo_dict, ref_embs, trained_model):
+    model = torch.load(trained_model)
+    dataset_train = IIVDataset(emo_emb_dir, psd_emb_dir, idx_emo_dict, train_test=True)
+    collate_fn = CommonCollateFn(
+        float_pad_value=0.0,
+        int_pad_value=0
+    )
+    train_loader = torch.utils.data.DataLoader(
+        dataset_train, batch_size=1, shuffle=True, collate_fn=collate_fn
+    )
+
+    Path(ref_embs).mkdir(exist_ok=True)
+    for batch_idx, data in enumerate(train_loader):
+        emo_emb = data[1]["emo_emb"]
+        emo_emb = emo_emb.permute(0, 2, 1)
+        emo_emb = emo_emb.to(device)
+        ids = data[0][0]
+        iiv_embed = model(emo_emb)  # (1, 768)
+        iiv_embed_n = os.path.join(ref_embs, ids + ".npy")
+        np.save(iiv_embed_n, iiv_embed.detach().cpu().numpy())
 
 
 if __name__ == '__main__':
@@ -196,7 +212,12 @@ if __name__ == '__main__':
     base_dir = "/home/rosen/project/FastSpeech2/"
     emo_emb_dir = base_dir + "ESD/emo_reps"
     psd_emb_dir = base_dir + "ESD/psd_reps"
+    ref_embs = base_dir + "ESD/iiv_reps"
     idx_emo_dict = base_dir + "ESD/metadata_new.json"
 
     # Show Intra- and Inter- variation vis after train
-    initiate_iiv_train(emo_emb_dir, psd_emb_dir, idx_emo_dict)
+    #initiate_iiv_train(emo_emb_dir, psd_emb_dir, idx_emo_dict)
+
+    # get trained iiv embed give best model
+    best_model = os.path.join(base_dir, "IIV/best_iiv_model.pt")
+    get_trained_iiv_emb(emo_emb_dir, psd_emb_dir, idx_emo_dict, ref_embs, best_model)

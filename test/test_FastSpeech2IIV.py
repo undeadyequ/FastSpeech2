@@ -10,7 +10,7 @@ import yaml
 
 
 def test_fastspeech2_IIV():
-    config_dir = "/Users/luoxuan/Project/FastSpeech2/config/ESD"
+    config_dir = "/home/rosen/project/FastSpeech2/config/ESD"
     train_config = config_dir + "/train.yaml"
     preprocess_config = config_dir + "/preprocess.yaml"
     model_config = config_dir + "/model.yaml"
@@ -61,7 +61,6 @@ def test_fastspeech2_IIV():
         torch.randint(0, 10, (batch, text_max_len)),
         torch.randn(batch, style_emb_dim),
     )
-
     model = FastSpeech2_IIV(preprocess_config, model_config)
     scheduled_optim = ScheduledOptim(
         model, train_config, model_config, restore_step
@@ -71,5 +70,3 @@ def test_fastspeech2_IIV():
     Loss = FastSpeech2Loss(preprocess_config, model_config)
     losses = Loss(inputs_value[:-1], output)
     print(losses)
-
-# LOSS
