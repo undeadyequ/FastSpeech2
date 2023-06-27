@@ -10,22 +10,22 @@ from .modules import VarianceAdaptor
 from utils.tools import get_mask_from_lengths
 
 
-class FastSpeech2(nn.Module):
+class FastSpeech2_IIV(nn.Module):
     """ FastSpeech2 """
 
     def __init__(self, preprocess_config, model_config):
-        super(FastSpeech2, self).__init__()
+        super(FastSpeech2_IIV, self).__init__()
         self.model_config = model_config
 
         self.encoder = Encoder(model_config)
 
         # style
-        self.style_emb = model_config["style_emb"]
-        if model_config["style_emb"]:
+        self.style_emb = model_config["style_emb"]["exist"]
+        if self.style_emb:
             if model_config["style_emb"]["fusion_style"] != "add":
-                self.cross_attn = CrossAttention(model_config)
+                self.concatenator = CrossAttention(model_config["CrossAttention"])
             else:
-                self.cross_attn = None
+                self.concatenator = None
 
         self.variance_adaptor = VarianceAdaptor(preprocess_config, model_config)
         self.decoder = Decoder(model_config)
@@ -56,16 +56,16 @@ class FastSpeech2(nn.Module):
         src_lens,
         max_src_len,
         mels=None,
-        speech=None,
-        style_emb=None,
         mel_lens=None,
         max_mel_len=None,
         p_targets=None,
         e_targets=None,
         d_targets=None,
+        style_emb=None,
         p_control=1.0,
         e_control=1.0,
         d_control=1.0,
+        #speech=None,
     ):
         """
 
@@ -100,12 +100,12 @@ class FastSpeech2(nn.Module):
         output = self.encoder(texts, src_masks)
 
         if self.style_emb:
-            if speech is not None:
-                style_emb = self.iiv_embeder(speech)
-            if self.cross_attn is not None:
-                output = self.cross_attn(output, style_emb)
+            #if speech is not None:
+            #    style_emb = self.iiv_embeder(speech)
+            if self.concatenator is not None:
+                output = self.concatenator(output, style_emb)
             else:
-                output = output + style_emb.unsequence(1).expand(-1, max_src_len, -1)
+                output = output + style_emb.unsqueeze(1).expand(-1, max_src_len, -1)
         if self.speaker_emb is not None:
             output = output + self.speaker_emb(speakers).unsqueeze(1).expand(
                 -1, max_src_len, -1

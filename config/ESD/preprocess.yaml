@@ -5,7 +5,8 @@ path:
   wav_dir: "16k_wav"
   lexicon_path: "lexicon/librispeech-lexicon.txt"
   raw_path: "./raw_data/ESD"
-  preprocessed_path: "./preprocessed_data/ESD"
+  #preprocessed_path: "./preprocessed_data/ESD"
+  preprocessed_path: "/Users/luoxuan/Desktop/ESD"
 
 preprocessing:
   val_size: 512

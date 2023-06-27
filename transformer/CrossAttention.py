@@ -5,20 +5,18 @@ import transformer.Constants as Constants
 from .Layers import FFTBlock
 from text.symbols import symbols
 
-import torch.nn as nn
-
-
 class CrossAttention(nn.Module):
-    def __int__(self, config):
-        self(CrossAttention, self).__init__()
-        txt_dim = config[""]
-        nhead = config[""]
-        dropout = config[""]
-        style_dim = config[""]
-        self.self_attn = nn.MultiheadAttention(txt_dim, nhead, dropout=dropout)
-        self.cross_attn = nn.MultiheadAttention(style_dim, nhead, dropout=dropout)
+    def __init__(self, config):
+        super(CrossAttention, self).__init__()
 
-    def froward(self, phoneme, style_emb):
+        txt_dim = config["txt_dim"]
+        nhead = config["nhead"]
+        dropout = config["dropout"]
+        style_dim = config["style_dim"]
+        self.self_attn = nn.MultiheadAttention(txt_dim, nhead, dropout=dropout, batch_first=True)
+        self.cross_attn = nn.MultiheadAttention(style_dim, nhead, dropout=dropout, batch_first=True)
+
+    def forward(self, phoneme, style_emb):
         """
         Args:
             phoneme:  (L, N, E1)
@@ -28,9 +26,8 @@ class CrossAttention(nn.Module):
         """
         phone2, txt_attn = self.self_attn(phoneme, phoneme, phoneme)
         phoneme = phoneme + phone2
-
-        ## attn_mask and key_padding_mask ???
-        style_emb = style_emb.unsqueeze(0).expand(phoneme.size(0), -1, -1)
+        style_emb = style_emb.unsqueeze(1)
         style_emb2, style_attn = self.cross_attn(phone2, style_emb, style_emb)
         phoneme = phoneme + style_emb2
         return phoneme
+
