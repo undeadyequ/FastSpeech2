@@ -1,6 +1,7 @@
 import argparse
 import os
 
+import numpy as np
 import torch
 import yaml
 import torch.nn as nn
@@ -9,13 +10,40 @@ from torch.utils.tensorboard import SummaryWriter
 from tqdm import tqdm
 
 from utils.model import get_model, get_vocoder, get_param_num
-from utils.tools import to_device, log, synth_one_sample
+from utils.tools import to_device, log, synth_one_sample, synth_one_sample_iiv
 from model import FastSpeech2Loss
 from dataset import Dataset
 
-from evaluate import evaluate
+from evaluate import evaluate, evaluate_fastIIV
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+iiv_embs = {
+    "Neutral": {
+        "0": "0018_000350.npy",
+        "1": "0011_000244.npy"
+    },
+    "Sad": {
+        "0": "0018_001350.npy",
+        "1": "0018_001379.npy",
+        "2": "0013_001189.npy",
+        "3": "0018_001400.npy"
+    },
+    "Angry": {
+        "0": "0018_000700.npy",
+        "1": "0016_000482.npy",
+        "2": "0018_000684.npy"
+    },
+    "Surprise": {
+        "0": "0018_001750.npy",
+        "1": "0011_001657.npy"
+    },
+    "Happy": {
+        "0": "0018_001048.npy",
+        "1": "0018_001050.npy"
+    }
+}
 
 
 def main(args, configs):
@@ -72,6 +100,7 @@ def main(args, configs):
     outer_bar.n = args.restore_step
     outer_bar.update()
 
+    iiv_embs_dir = preprocess_config["path"]["preprocessed_path"] + "/iiv_reps"
     while True:
         inner_bar = tqdm(total=len(loader), desc="Epoch {}".format(epoch), position=1)
         for batchs in loader:
@@ -139,9 +168,37 @@ def main(args, configs):
                         tag="Training/step_{}_{}_synthesized".format(step, tag),
                     )
 
+                    for emo, grp_iiv in iiv_embs.items():
+                        for grp, iiv in grp_iiv.items():
+                            iiv_embs_torch = torch.from_numpy(np.load(os.path.join(iiv_embs_dir, iiv))).\
+                                to(device).expand(batch_size, -1)
+                            output_iiv = model(*(batch[2:-1]), style_emb=iiv_embs_torch)
+                            fig_iiv, wav_prediction_iiv, tag = synth_one_sample_iiv(
+                                batch,
+                                output_iiv,
+                                vocoder,
+                                model_config,
+                                preprocess_config,
+                            )
+                            log(
+                                train_logger,
+                                fig=fig_iiv,
+                                tag="Training/step_{}_{}_{}_{}".format(step, tag, emo, grp),
+                            )
+                            sampling_rate = preprocess_config["preprocessing"]["audio"][
+                                "sampling_rate"
+                            ]
+                            log(
+                                train_logger,
+                                audio=wav_prediction_iiv,
+                                sampling_rate=sampling_rate,
+                                tag="Training/step_{}_{}_{}_{}_synthesized".format(step, tag, emo, grp),
+                            )
+
                 if step % val_step == 0:
                     model.eval()
-                    message = evaluate(model, step, configs, val_logger, vocoder)
+                    #message = evaluate(model, step, configs, val_logger, vocoder)
+                    message = evaluate_fastIIV(model, step, configs, val_logger, vocoder, iiv_embs)
                     with open(os.path.join(val_log_path, "log.txt"), "a") as f:
                         f.write(message + "\n")
                     outer_bar.write(message)

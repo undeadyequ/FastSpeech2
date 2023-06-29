@@ -18,12 +18,15 @@ variance_predictor:
 style_emb:
   fusion_style: "crossAttention"  # support "add" or "crossAttention"
   exist: True
+  dims: 768
 
 CrossAttention:
   txt_dim: 256
   nhead: 8
   dropout: 0.2
   style_dim: 256
+
+model_name: "FastSpeech2_iiv"  # support FastSpeech2 and FastSpeech2_iiv
 
 
 variance_embedding:

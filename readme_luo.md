@@ -197,3 +197,64 @@ start : Sad
 {0: {51: -11.148005, 7: 1049.5886}, 1: {51: -1.7410944, 7: 122.96218}, 2: {51: -18559.893, 7: 141.74426}, 3: {51: -2.5960681, 7: 74.79896}}
 Process finished with exit code 0
 
+
+        sample = {
+            "id": basename,
+            "speaker": speaker_id,
+            "text": phone,
+            "raw_text": raw_text,
+            "mel": mel,
+            "pitch": pitch,
+            "energy": energy,
+            "duration": duration,
+        }
+        
+        return (
+            ids,
+            raw_texts,
+            speakers,
+            texts,
+            text_lens,
+            max(text_lens),
+            mels,
+            mel_lens,
+            max(mel_lens),
+            pitches,
+            energies,
+            durations,
+        )
+
+
+          def forward(
+        self,
+        speakers,
+        texts,
+        src_lens,
+        max_src_len,
+        mels=None,
+        mel_lens=None,
+        max_mel_len=None,
+        p_targets=None,
+        e_targets=None,
+        d_targets=None,
+        style_emb=None,
+        p_control=1.0,
+        e_control=1.0,
+        d_control=1.0,
+        #speech=None,
+    ):
+
+
+      return (
+            output,
+            postnet_output,
+            p_predictions,
+            e_predictions,
+            log_d_predictions,
+            d_rounded,
+            src_masks,
+            mel_masks,
+            src_lens,
+            mel_lens,
+        )
+

@@ -82,7 +82,7 @@ class Dataset(Dataset):
                 "iiv_reps",
                 "{}.npy".format(basename),
             )
-            sample["iiv"] = np.load(iiv_path)
+            sample["iiv"] = np.load(iiv_path).squeeze(0)
 
         return sample
 
@@ -121,6 +121,26 @@ class Dataset(Dataset):
         pitches = pad_1D(pitches)
         energies = pad_1D(energies)
         durations = pad_1D(durations)
+
+        if self.style_embed:
+            iiv_emb = [data[idx]["iiv"] for idx in idxs]
+            iiv_emb = pad_1D(iiv_emb)
+            return (
+                ids,
+                raw_texts,
+                speakers,
+                texts,
+                text_lens,
+                max(text_lens),
+                mels,
+                mel_lens,
+                max(mel_lens),
+                pitches,
+                energies,
+                durations,
+                iiv_emb
+            )
+
 
         return (
             ids,

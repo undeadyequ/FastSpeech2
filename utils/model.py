@@ -5,13 +5,18 @@ import torch
 import numpy as np
 
 import hifigan
-from model import FastSpeech2, ScheduledOptim
+from model import FastSpeech2, ScheduledOptim, FastSpeech2_IIV
 
 
 def get_model(args, configs, device, train=False):
     (preprocess_config, model_config, train_config) = configs
 
-    model = FastSpeech2(preprocess_config, model_config).to(device)
+    if model_config["model_name"] == "FastSpeech2":
+        model = FastSpeech2(preprocess_config, model_config).to(device)
+    elif model_config["model_name"] == "FastSpeech2_iiv":
+        model = FastSpeech2_IIV(preprocess_config, model_config).to(device)
+    else:
+        print("pleae choose FastSpeech2_IIV or FastSpeech2.")
     if args.restore_step:
         ckpt_path = os.path.join(
             train_config["path"]["ckpt_path"],

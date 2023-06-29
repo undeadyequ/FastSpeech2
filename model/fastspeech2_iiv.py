@@ -23,6 +23,8 @@ class FastSpeech2_IIV(nn.Module):
         self.style_emb = model_config["style_emb"]["exist"]
         if self.style_emb:
             if model_config["style_emb"]["fusion_style"] != "add":
+                self.style_lr = nn.Linear(model_config["style_emb"]["dims"],
+                                          model_config["transformer"]["encoder_hidden"])
                 self.concatenator = CrossAttention(model_config["CrossAttention"])
             else:
                 self.concatenator = None
@@ -103,6 +105,7 @@ class FastSpeech2_IIV(nn.Module):
             #if speech is not None:
             #    style_emb = self.iiv_embeder(speech)
             if self.concatenator is not None:
+                style_emb = self.style_lr(style_emb)
                 output = self.concatenator(output, style_emb)
             else:
                 output = output + style_emb.unsqueeze(1).expand(-1, max_src_len, -1)

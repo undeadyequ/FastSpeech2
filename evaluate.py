@@ -7,10 +7,10 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 
 from utils.model import get_model, get_vocoder
-from utils.tools import to_device, log, synth_one_sample
+from utils.tools import to_device, log, synth_one_sample, synth_one_sample_iiv
 from model import FastSpeech2Loss
 from dataset import Dataset
-
+import numpy as np
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -85,6 +85,109 @@ def evaluate(model, step, configs, logger=None, vocoder=None):
 
     return message
 
+
+def evaluate_fastIIV(model, step, configs, logger=None, vocoder=None, iiv_embs=None):
+    preprocess_config, model_config, train_config = configs
+    iiv_embs_dir = preprocess_config["path"]["preprocessed_path"] + "/iiv_reps"
+
+    # Get dataset
+    dataset = Dataset(
+        "val.txt", preprocess_config, train_config, sort=False, drop_last=False
+    )
+    batch_size = train_config["optimizer"]["batch_size"]
+    loader = DataLoader(
+        dataset,
+        batch_size=batch_size,
+        shuffle=False,
+        collate_fn=dataset.collate_fn,
+    )
+
+    # Get loss function
+    Loss = FastSpeech2Loss(preprocess_config, model_config).to(device)
+
+    # Evaluation
+    signal = True
+    loss_sums = [0 for _ in range(6)]
+    for batchs in loader:
+        for batch in batchs:
+            batch = to_device(batch, device)
+            with torch.no_grad():
+                # Forward without iiv
+
+                output = model(*(batch[2:]))
+                # Cal Loss
+                losses = Loss(batch, output)
+
+                for i in range(len(losses)):
+                    loss_sums[i] += losses[i].item() * len(batch[0])
+
+                # with iiv emb
+                if signal:
+                    for emo, grp_iiv in iiv_embs.items():
+                        for grp, iiv in grp_iiv.items():
+                            iiv_embs_torch = torch.from_numpy(np.load(os.path.join(iiv_embs_dir, iiv))). \
+                                to(device).expand(batch_size, -1)
+                            output_iiv = model(*(batch[2:-1]), style_emb=iiv_embs_torch)
+                            fig_iiv, wav_prediction_iiv, tag = synth_one_sample_iiv(
+                                batch,
+                                output_iiv,
+                                vocoder,
+                                model_config,
+                                preprocess_config,
+                            )
+                            log(
+                                logger,
+                                fig=fig_iiv,
+                                tag="Validation/step_{}_{}_{}_{}".format(step, tag, emo, grp),
+                            )
+                            sampling_rate = preprocess_config["preprocessing"]["audio"][
+                                "sampling_rate"
+                            ]
+                            log(
+                                logger,
+                                audio=wav_prediction_iiv,
+                                sampling_rate=sampling_rate,
+                                tag="Validation/step_{}_{}_{}_{}_synthesized".format(step, tag, emo, grp),
+                            )
+                    signal = False
+
+
+    loss_means = [loss_sum / len(dataset) for loss_sum in loss_sums]
+
+    message = "Validation Step {}, Total Loss: {:.4f}, Mel Loss: {:.4f}, Mel PostNet Loss: {:.4f}, Pitch Loss: {:.4f}, Energy Loss: {:.4f}, Duration Loss: {:.4f}".format(
+        *([step] + [l for l in loss_means])
+    )
+
+    if logger is not None:
+        fig, wav_reconstruction, wav_prediction, tag = synth_one_sample(
+            batch,
+            output,
+            vocoder,
+            model_config,
+            preprocess_config,
+        )
+
+        log(logger, step, losses=loss_means)
+        log(
+            logger,
+            fig=fig,
+            tag="Validation/step_{}_{}".format(step, tag),
+        )
+        sampling_rate = preprocess_config["preprocessing"]["audio"]["sampling_rate"]
+        log(
+            logger,
+            audio=wav_reconstruction,
+            sampling_rate=sampling_rate,
+            tag="Validation/step_{}_{}_reconstructed".format(step, tag),
+        )
+        log(
+            logger,
+            audio=wav_prediction,
+            sampling_rate=sampling_rate,
+            tag="Validation/step_{}_{}_synthesized".format(step, tag),
+        )
+
+    return message
 
 if __name__ == "__main__":
 

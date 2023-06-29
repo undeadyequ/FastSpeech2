@@ -28,7 +28,7 @@ def test_fastspeech2_IIV():
     text_max_len = 31
     mel_max_len = 50
     speaker_n = 10
-    style_emb_dim = 256
+    style_emb_dim = 786
     speech_len = 70
 
     inputs = dict(

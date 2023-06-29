@@ -9,7 +9,7 @@
 
 5. Show cross table of conditioned intra-emotion and the most varied style of synthesized speech.
 """
-
+import json
 import os
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
@@ -19,38 +19,64 @@ import librosa
 plt.rc('font', family='serif')
 fontsize=12
 
+
+colors = {
+    "Neutral": "k",
+    "Sad": "b",
+    "Angry": "r",
+    "Surprise": "y",
+    "Happy": "g"
+}
+
+
+makers = {
+    "0": "o",
+    "1": "v",
+    "2": "s",
+    "3": "+"}
+
 def show_embed_scatter(embeddings,
                        emo_list,
                        grp_list,
                        out_png="output.png"
                        ):
     """
+    add emotion and grp agenda
+    reference:
+    https://matplotlib.org/stable/gallery/lines_bars_and_markers/scatter_with_legend.html
+
     Args:
         embeddings: (emb_num, dim_num)
-        emo_list: (emb_num,)
-        grp_list: (emb_num,)
+        emo_list: (emb_num,)  exp: ("happy", )
+        grp_list: (emb_num,)       ("1", )
     Returns:
     """
     fig, ax = plt.subplots()
-    emo_nums = len(list(set(emo_list)))
+    emo_sets = list(set(emo_list))
+    grp_sets = list(set(grp_list))
+    emo_nums = len(emo_sets)
     tSNE_metrics = TSNE(n_components=2, random_state=0).fit_transform(embeddings)
 
     scatters = []
-    for emo in range(emo_nums):
+    legend_names = []
+    for emo in emo_sets:
         cur_emo = emo_list == emo
         cur_emo_embeds = tSNE_metrics[cur_emo]
         cur_emo_grps = grp_list[cur_emo]
-        cur_emo_grp_num = len(list(set(cur_emo_grps)))
-        for grp in range(cur_emo_grp_num):
+        color = colors[emo]
+        for grp in grp_sets:
             cur_emo_grp = cur_emo_grps == grp
             cur_emo_grp_embeds = cur_emo_embeds[cur_emo_grp]
             cur_emo_grp_embeds_n = len(cur_emo_grp_embeds)
-            scatter = ax.scatter(cur_emo_grp_embeds[:, 0], cur_emo_grp_embeds[:, 1], [emo] * cur_emo_grp_embeds_n,
-                                 [grp] * cur_emo_grp_embeds_n
-                                 )
+            marker = makers[grp]
+            scatter = ax.scatter(cur_emo_grp_embeds[:, 0], cur_emo_grp_embeds[:, 1], c=color,
+                                 marker=marker)
+            legend_names.append(emo + "_" + grp)
             scatters.append(scatter)
     # show
-    ax.legend(scatters, loc="lower left", title="Classes", scatterpoints=1, fontsize=8)
+    ax.legend(scatters,
+              legend_names,
+              loc="lower left", title="Classes", scatterpoints=1, fontsize=6)
     plt.savefig("output.png")
 
     # show annotation text
@@ -188,8 +214,8 @@ def draw_contours_graph(
 
 
 def show_vis_test(embeddings,
-             emo_list,
-             grp_list):
+                  emo_list,
+                  grp_list):
     tSNE_metrics = TSNE(n_components=2, random_state=0).fit_transform(embeddings)
     for x, y, c, s in zip(tSNE_metrics[:, 0], tSNE_metrics[:, 1], emo_list, grp_list):
         plt.scatter(x, y, s=12, c=c, marker=s)
@@ -202,7 +228,8 @@ def show_vis_test(embeddings,
 
 def show_iiv_distance(
         emb_dir: str,
-        idx_emo_dict_f: str
+        idx_emo_dict_f: str,
+        out_img: str = "output.png"
 ):
     """
 
@@ -214,35 +241,22 @@ def show_iiv_distance(
 
     """
 
-    idx_emo_dict = read_dict(idx_emo_dict_f)
+    with open(idx_emo_dict_f, "r") as f:
+        meta_data_dir = json.load(f)
+
     emo_embs = []
     emo_labels = []
     grp_labels = []
 
     for emo_emb_f in os.listdir(emb_dir):
         id = emo_emb_f.split(".")[0]
-        emo_lab = idx_emo_dict[id]["emotion"]
-        grp_lab = idx_emo_dict[id]["group"]
-        emo_emb = np.load(emo_emb_f)
+        emo_lab = meta_data_dir[id]["emotion"]
+        grp_lab = meta_data_dir[id]["group"]
+        emo_emb_abs_f = os.path.join(emb_dir, emo_emb_f)
+        emo_emb = np.load(emo_emb_abs_f)
 
         emo_embs.append(emo_emb)
         emo_labels.append(emo_lab)
         grp_labels.append(grp_lab)
 
-    tSNE_metrics = TSNE(n_components=2, random_state=0).fit_transform(emo_embs)
-
-    for e in list(set(emo_labels)):
-        e_index = emo_labels.index(e)
-        grp_e_labels = grp_labels.index(e_index)
-        plt.scatter(tSNE_metrics[:, 0],
-                    tSNE_metrics[:, 1],
-                    c=grp_e_labels,
-                    marker=e_index
-                    )
-        plt.colorbar()
-        plt.savefig("output_wav2net.png")
-        plt.show()
-
-
-def read_dict(dict_f: str):
-    return {}
+    show_embed_scatter(emo_embs, emo_labels, grp_labels, out_img)

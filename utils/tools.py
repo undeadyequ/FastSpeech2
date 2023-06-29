@@ -8,9 +8,7 @@ import matplotlib
 from scipy.io import wavfile
 from matplotlib import pyplot as plt
 
-
 matplotlib.use("Agg")
-
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 #device = torch.device("cpu")
@@ -56,6 +54,7 @@ def to_device(data, device):
             energies,
             durations,
         )
+
     if len(data) == 13:
         (
             ids,
@@ -70,7 +69,7 @@ def to_device(data, device):
             pitches,
             energies,
             durations,
-            iiv
+            iiv_emb,
         ) = data
 
         speakers = torch.from_numpy(speakers).long().to(device)
@@ -81,7 +80,7 @@ def to_device(data, device):
         pitches = torch.from_numpy(pitches).float().to(device)
         energies = torch.from_numpy(energies).to(device)
         durations = torch.from_numpy(durations).long().to(device)
-        iiv = torch.from_numpy(iiv).long().to(device)
+        iiv_emb = torch.from_numpy(iiv_emb).float().to(device)
 
         return (
             ids,
@@ -96,7 +95,7 @@ def to_device(data, device):
             pitches,
             energies,
             durations,
-            iiv
+            iiv_emb
         )
 
     if len(data) == 6:
@@ -110,7 +109,7 @@ def to_device(data, device):
 
 
 def log(
-    logger, step=None, losses=None, fig=None, audio=None, sampling_rate=22050, tag=""
+        logger, step=None, losses=None, fig=None, audio=None, sampling_rate=22050, tag=""
 ):
     if losses is not None:
         logger.add_scalar("Loss/total_loss", losses[0], step)
@@ -149,8 +148,54 @@ def expand(values, durations):
     return np.array(out)
 
 
-def synth_one_sample(targets, predictions, vocoder, model_config, preprocess_config):
+def synth_one_sample_iiv(targets, predictions, vocoder, model_config, preprocess_config):
+    basename = targets[0][0] + targets[0][0]
+    src_len = predictions[8][0].item()
+    mel_len = predictions[9][0].item()
+    mel_target = targets[6][0, :mel_len].detach().transpose(0, 1)
+    mel_prediction = predictions[1][0, :mel_len].detach().transpose(0, 1)
+    duration = targets[11][0, :src_len].detach().cpu().numpy()
+    if preprocess_config["preprocessing"]["pitch"]["feature"] == "phoneme_level":
+        pitch = targets[9][0, :src_len].detach().cpu().numpy()
+        pitch = expand(pitch, duration)
+    else:
+        pitch = targets[9][0, :mel_len].detach().cpu().numpy()
+    if preprocess_config["preprocessing"]["energy"]["feature"] == "phoneme_level":
+        energy = targets[10][0, :src_len].detach().cpu().numpy()
+        energy = expand(energy, duration)
+    else:
+        energy = targets[10][0, :mel_len].detach().cpu().numpy()
 
+    with open(
+            os.path.join(preprocess_config["path"]["preprocessed_path"], "stats.json")
+    ) as f:
+        stats = json.load(f)
+        stats = stats["pitch"] + stats["energy"][:2]
+
+    fig = plot_mel(
+        [
+            (mel_prediction.cpu().numpy(), pitch, energy),
+            (mel_target.cpu().numpy(), pitch, energy),
+        ],
+        stats,
+        ["Synthetized Spectrogram", "Ground-Truth Spectrogram"],
+    )
+
+    if vocoder is not None:
+        from .model import vocoder_infer
+
+        wav_prediction = vocoder_infer(
+            mel_prediction.unsqueeze(0),
+            vocoder,
+            model_config,
+            preprocess_config,
+        )[0]
+    else:
+        wav_prediction = None
+
+    return fig, wav_prediction, basename
+
+def synth_one_sample(targets, predictions, vocoder, model_config, preprocess_config):
     basename = targets[0][0]
     src_len = predictions[8][0].item()
     mel_len = predictions[9][0].item()
@@ -169,7 +214,7 @@ def synth_one_sample(targets, predictions, vocoder, model_config, preprocess_con
         energy = targets[10][0, :mel_len].detach().cpu().numpy()
 
     with open(
-        os.path.join(preprocess_config["path"]["preprocessed_path"], "stats.json")
+            os.path.join(preprocess_config["path"]["preprocessed_path"], "stats.json")
     ) as f:
         stats = json.load(f)
         stats = stats["pitch"] + stats["energy"][:2]
@@ -205,7 +250,6 @@ def synth_one_sample(targets, predictions, vocoder, model_config, preprocess_con
 
 
 def synth_samples(targets, predictions, vocoder, model_config, preprocess_config, path):
-
     basenames = targets[0]
     for i in range(len(predictions[0])):
         basename = basenames[i]
@@ -225,7 +269,7 @@ def synth_samples(targets, predictions, vocoder, model_config, preprocess_config
             energy = predictions[3][i, :mel_len].detach().cpu().numpy()
 
         with open(
-            os.path.join(preprocess_config["path"]["preprocessed_path"], "stats.json")
+                os.path.join(preprocess_config["path"]["preprocessed_path"], "stats.json")
         ) as f:
             stats = json.load(f)
             stats = stats["pitch"] + stats["energy"][:2]
@@ -358,3 +402,13 @@ def pad(input_ele, mel_max_length=None):
         out_list.append(one_batch_padded)
     out_padded = torch.stack(out_list)
     return out_padded
+
+
+def get_eval_iiv_embs():
+    """
+    get iiv_embs from training iiv_embs folder.
+    :return:
+    :rtype:
+    """
+
+    pass
