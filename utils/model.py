@@ -7,6 +7,7 @@ import numpy as np
 import hifigan
 from model import FastSpeech2, ScheduledOptim, FastSpeech2_IIV
 
+from scipy.io.wavfile import write
 
 def get_model(args, configs, device, train=False):
     (preprocess_config, model_config, train_config) = configs
@@ -95,3 +96,15 @@ def vocoder_infer(mels, vocoder, model_config, preprocess_config, lengths=None):
             wavs[i] = wavs[i][: lengths[i]]
 
     return wavs
+
+
+def vocoder_infer_16k(mels, vocoder_name):
+    from speechbrain.pretrained import HIFIGAN
+    hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-libritts-16kHz", savedir="tmpdir")
+    if vocoder_name == "HiFi-GAN":
+        # Running Vocoder (spectrogram-to-waveform)
+        waveforms = hifi_gan.decode_batch(mels)
+        waveforms = waveforms.cpu().numpy()
+        return waveforms
+    else:
+        print("only hifi-gan supported!")

@@ -26,7 +26,7 @@ class Wav2vec2Wrapper(nn.Module):
         self.wav2vec2 = Wav2Vec2ForPreTraining.from_pretrained("facebook/wav2vec2-base", revision='2dcc7b7f9b11f0ef271067e62599a27317a03114').wav2vec2
 #        self.wav2vec2 = Wav2Vec2ForPreTraining(config=Wav2Vec2Config.from_pretrained("facebook/wav2vec2-base", revision='2dcc7b7f9b11f0ef271067e62599a27317a03114')).wav2vec2
         #Disable gradient checkpointing for ddp
-        self.wav2vec2.encoder.config.gradient_checkpointing = False
+        self.wav2vec2.encoder.preprocess_config.gradient_checkpointing = False
         self.pretrain = pretrain
         if pretrain:
             self.mask_time_length = 15
@@ -100,6 +100,6 @@ class Wav2vec2Wrapper(nn.Module):
             # 1D convolutional layer output length formula taken
             # from https://pytorch.org/docs/stable/generated/torch.nn.Conv1d.html
             return (input_length - kernel_size) // stride + 1
-        for kernel_size, stride in zip(self.wav2vec2.config.conv_kernel, self.wav2vec2.config.conv_stride):
+        for kernel_size, stride in zip(self.wav2vec2.preprocess_config.conv_kernel, self.wav2vec2.preprocess_config.conv_stride):
             input_length = _conv_out_length(input_length, kernel_size, stride)
         return input_length

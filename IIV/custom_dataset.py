@@ -2,7 +2,7 @@ import os
 
 import torch
 from torchvision import datasets, transforms
-import pandas as pd
+#import pandas as pd
 from torch.utils.data import Dataset
 import numpy as np
 import json

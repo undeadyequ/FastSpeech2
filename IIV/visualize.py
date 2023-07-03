@@ -30,15 +30,16 @@ colors = {
 
 
 makers = {
-    "0": "o",
-    "1": "v",
-    "2": "s",
-    "3": "+"}
+    "0": ".",
+    "1": "_",
+    "2": "|",
+    "3": "3"}
 
 def show_embed_scatter(embeddings,
                        emo_list,
                        grp_list,
-                       out_png="output.png"
+                       out_png="output.png",
+                       fig_size=20
                        ):
     """
     add emotion and grp agenda
@@ -51,7 +52,7 @@ def show_embed_scatter(embeddings,
         grp_list: (emb_num,)       ("1", )
     Returns:
     """
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(fig_size, fig_size))
     emo_sets = list(set(emo_list))
     grp_sets = list(set(grp_list))
     emo_nums = len(emo_sets)
@@ -69,16 +70,16 @@ def show_embed_scatter(embeddings,
             cur_emo_grp_embeds = cur_emo_embeds[cur_emo_grp]
             cur_emo_grp_embeds_n = len(cur_emo_grp_embeds)
             marker = makers[grp]
-            scatter = ax.scatter(cur_emo_grp_embeds[:, 0], cur_emo_grp_embeds[:, 1], c=color,
-                                 marker=marker)
-            legend_names.append(emo + "_" + grp)
-            scatters.append(scatter)
+            if cur_emo_grp_embeds_n != 0:
+                scatter = ax.scatter(cur_emo_grp_embeds[:, 0], cur_emo_grp_embeds[:, 1], c=color,
+                                     marker=marker, s=12)
+                legend_names.append(emo + "_" + grp + "(Num:" + str(cur_emo_grp_embeds_n) + ")")
+                scatters.append(scatter)
     # show
     ax.legend(scatters,
               legend_names,
-              loc="lower left", title="Classes", scatterpoints=1, fontsize=6)
-    plt.savefig("output.png")
-
+              loc="lower left", title="Total Num:{}".format(len(emo_list)), markerscale=3, fontsize=12,
+              bbox_to_anchor=(0.85, 0))
     # show annotation text
     #fig.text(0.5, 0.02, x_lab, ha='center', fontsize=fontsize)
     #fig.text(0.02, 0.5, y_lab, va='center', rotation='vertical', fontsize=fontsize)
@@ -229,7 +230,9 @@ def show_vis_test(embeddings,
 def show_iiv_distance(
         emb_dir: str,
         idx_emo_dict_f: str,
-        out_img: str = "output.png"
+        out_img: str = "output.png",
+        max_point = 3000,
+        fig_size = 20
 ):
     """
 
@@ -254,9 +257,47 @@ def show_iiv_distance(
         grp_lab = meta_data_dir[id]["group"]
         emo_emb_abs_f = os.path.join(emb_dir, emo_emb_f)
         emo_emb = np.load(emo_emb_abs_f)
+        if len(emo_emb.shape) == 2:
+            if emo_emb.shape[0] == 1:
+                emo_emb = emo_emb.squeeze(0)
+            elif emo_emb.shape[1] == 1:
+                emo_emb = emo_emb.squeeze(1)
+            else:
+                emo_emb = emo_emb.mean(axis=0)
 
         emo_embs.append(emo_emb)
         emo_labels.append(emo_lab)
         grp_labels.append(grp_lab)
 
-    show_embed_scatter(emo_embs, emo_labels, grp_labels, out_img)
+    emo_embs = np.array(emo_embs)
+    emo_labels = np.array(emo_labels)
+    grp_labels = np.array(grp_labels)
+
+    show_embed_scatter(emo_embs[:max_point], emo_labels[:max_point], grp_labels[:max_point], out_img, fig_size)
+
+
+
+if __name__ == '__main__':
+    iiv_dir = "/home/rosen/project/FastSpeech2/preprocessed_data/ESD/iiv_reps"
+    ssl_dir = "/home/rosen/project/FastSpeech2/ESD/emo_reps"
+    psd_dir = "/home/rosen/project/FastSpeech2/ESD/psd_reps"
+    emo_dict_f = "/home/rosen/project/FastSpeech2/ESD/metadata_new.json"
+    maxPoint = -1
+
+    if False:
+        show_iiv_distance(
+            psd_dir,
+            emo_dict_f,
+            "{}_emb_{}.png".format("psd", maxPoint),
+            maxPoint
+        )
+    if True:
+        for name, emb_dir in zip(["iiv", "ssl", "psd"], [iiv_dir, ssl_dir, psd_dir]):
+            show_iiv_distance(
+                emb_dir,
+                emo_dict_f,
+                "exp/{}_emb_{}.png".format(name, maxPoint),
+                maxPoint,
+                20
+            )
+            print("finished_{}".format(name))

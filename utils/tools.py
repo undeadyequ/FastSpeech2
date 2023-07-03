@@ -229,20 +229,26 @@ def synth_one_sample(targets, predictions, vocoder, model_config, preprocess_con
     )
 
     if vocoder is not None:
-        from .model import vocoder_infer
-
-        wav_reconstruction = vocoder_infer(
-            mel_target.unsqueeze(0),
-            vocoder,
-            model_config,
-            preprocess_config,
-        )[0]
-        wav_prediction = vocoder_infer(
-            mel_prediction.unsqueeze(0),
-            vocoder,
-            model_config,
-            preprocess_config,
-        )[0]
+        from .model import vocoder_infer, vocoder_infer_16k
+        sr = preprocess_config["preprocessing"]["audio"]["sampling_rate"]
+        if sr == 22050:
+            wav_reconstruction = vocoder_infer(
+                mel_target.unsqueeze(0),
+                vocoder,
+                model_config,
+                preprocess_config,
+            )[0]
+            wav_prediction = vocoder_infer(
+                mel_prediction.unsqueeze(0),
+                vocoder,
+                model_config,
+                preprocess_config,
+            )[0]
+        elif sr == 16000:
+            wav_reconstruction = vocoder_infer_16k(mel_target.unsqueeze(0), model_config["vocoder"]["model"])
+            wav_prediction = vocoder_infer_16k(mel_prediction.unsqueeze(0), model_config["vocoder"]["model"])
+        else:
+            raise IOError("Only support 16k and 22050 vocoder")
     else:
         wav_reconstruction = wav_prediction = None
 

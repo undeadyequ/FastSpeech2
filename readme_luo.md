@@ -258,3 +258,5 @@ Process finished with exit code 0
             mel_lens,
         )
 
+
+# conv1D mel seems lost high-frequence detail, when compared with Librosa mel

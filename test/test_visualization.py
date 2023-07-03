@@ -65,7 +65,7 @@ def test_visualize():
 
 
 def test_show_iiv_distance():
-    iiv_dir = "/home/rosen/project/FastSpeech2/preprocessed_data/ESD_bk/iiv_reps"
+    iiv_dir = "/home/rosen/project/FastSpeech2/preprocessed_data/ESD/iiv_reps"
     emo_dict_f = "/home/rosen/project/FastSpeech2/ESD/metadata_new.json"
     show_iiv_distance(
         iiv_dir,
