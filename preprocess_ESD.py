@@ -18,6 +18,7 @@ import librosa
 import soundfile as sf
 from g2p_en import G2p
 from wav2vec2.wrapper import MinimalClassifier
+from config.ESD.constants import emo_contri_dimN, emo_optimal_clusterN
 
 import sys
 sys.path.insert(0, '/home/rosen/project/FG-transformer-TTS/waveglow/tacotron2')
@@ -359,36 +360,26 @@ def check_emo_group():
 
 
 if __name__ == '__main__':
-    #prepare_esd()
-    #prepare_grp_id(data_dir=".")
-
-    # this is set by get_optimal_grpNum
-    emo_optimal_clusterN = {
-        "Angry": 3,
-        "Surprise": 2,
-        "Sad": 4,
-        "Neutral": 2,
-        "Happy": 2
-    }
-
-    emo_contri_dimN = {
-        "Angry": 2,
-        "Surprise": 1,
-        "Sad": 2,
-        "Neutral": 1,
-        "Happy": 2
-    }
-
-    out_dir = "/home/rosen/project/FastSpeech2/ESD"
-    #prepare_grp_id(
-    #    data_dir=out_dir,
-    #    psd_extract=False,
-    #    emo_clusterN=emo_optimal_clusterN
-    #)
-
     psd_reps = "/home/rosen/project/FastSpeech2/ESD/psd_reps"
     meta_json = "/home/rosen/project/FastSpeech2/ESD/metadata.json"
 
-    #optimal_ks = get_optimal_grpNum(psd_reps, meta_json, de_rate=0.16)
-    #print(optimal_ks)
-    check_contribute_score(psd_reps, meta_json, emo_optimal_clusterN, emo_contri_dimN)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--prepare_features", type=bool, default=False)
+    parser.add_argument("--get_optimal_clusterN", type=bool, default=False)
+    parser.add_argument("--check_contrib_dims", type=bool, default=False)
+    parser.add_argument("--prepare_groups", type=bool, default=False)
+    args = parser.parse_args()
+    if args.prepare_features:
+        prepare_esd()
+    if args.get_optimal_clusterN:
+        optimal_ks = get_optimal_grpNum(psd_reps, meta_json, de_rate=0.16)
+        print(optimal_ks)
+    if args.check_contrib_dims:
+        check_contribute_score(psd_reps, meta_json, emo_optimal_clusterN, emo_contri_dimN)
+    if args.prepare_groups:
+        out_dir = "/home/rosen/project/FastSpeech2/ESD"
+        prepare_grp_id(
+            data_dir=out_dir,
+            psd_extract=False,
+            emo_clusterN=emo_optimal_clusterN
+        )

@@ -62,3 +62,29 @@ dimension_name = [
         "MeanUnvoicedSegmentLength",
         "StddevUnvoicedSegmentLength",
     ]
+
+# this is set by get_optimal_grpNum
+emo_optimal_clusterN_ver1 = {
+        "Angry": 3,
+        "Surprise": 2,
+        "Sad": 4,
+        "Neutral": 2,
+        "Happy": 2
+}
+
+emo_optimal_clusterN = {
+        "Angry": 2,
+        "Surprise": 1,
+        "Sad": 3,
+        "Neutral": 1,
+        "Happy": 2
+}
+
+# The number of contribute dims
+emo_contri_dimN = {
+        "Angry": 2,
+        "Surprise": 1,
+        "Sad": 2,
+        "Neutral": 1,
+        "Happy": 2
+}

@@ -1,5 +1,6 @@
 import argparse
 import os
+from scipy.io.wavfile import write
 
 import numpy as np
 import torch
@@ -131,12 +132,9 @@ def main(args, configs):
                     message2 = "Total Loss: {:.4f}, Mel Loss: {:.4f}, Mel PostNet Loss: {:.4f}, Pitch Loss: {:.4f}, Energy Loss: {:.4f}, Duration Loss: {:.4f}".format(
                         *losses
                     )
-
                     with open(os.path.join(train_log_path, "log.txt"), "a") as f:
                         f.write(message1 + message2 + "\n")
-
                     outer_bar.write(message1 + message2)
-
                     log(train_logger, step, losses=losses)
 
                 if step % synth_step == 0:
@@ -155,18 +153,27 @@ def main(args, configs):
                     sampling_rate = preprocess_config["preprocessing"]["audio"][
                         "sampling_rate"
                     ]
+                    tag_recon = "Training/step_{}_{}_reconstructed".format(step, tag)
                     log(
                         train_logger,
                         audio=wav_reconstruction,
                         sampling_rate=sampling_rate,
-                        tag="Training/step_{}_{}_reconstructed".format(step, tag),
+                        tag=tag_recon,
                     )
+                    # duplicated output for audio
+                    audio_path = "/home/rosen/project/FastSpeech2/exp_res/{}".format(tag_recon)
+                    write(audio_path, 16000, wav_reconstruction)
+
+                    tag_syn = "Training/step_{}_{}_synthesized".format(step, tag)
                     log(
                         train_logger,
                         audio=wav_prediction,
                         sampling_rate=sampling_rate,
-                        tag="Training/step_{}_{}_synthesized".format(step, tag),
+                        tag=tag_syn,
                     )
+                    # duplicated output for audio
+                    audio_path = "/home/rosen/project/FastSpeech2/exp_res/{}".format(tag_syn)
+                    write(audio_path, 16000, wav_prediction)
 
                     for emo, grp_iiv in iiv_embs.items():
                         for grp, iiv in grp_iiv.items():
@@ -185,15 +192,19 @@ def main(args, configs):
                                 fig=fig_iiv,
                                 tag="Training/step_{}_{}_{}_{}".format(step, tag, emo, grp),
                             )
+
                             sampling_rate = preprocess_config["preprocessing"]["audio"][
                                 "sampling_rate"
                             ]
+                            tag_ivv = "Training/step_{}_{}_{}_{}_synthesized".format(step, tag, emo, grp)
                             log(
                                 train_logger,
                                 audio=wav_prediction_iiv,
                                 sampling_rate=sampling_rate,
-                                tag="Training/step_{}_{}_{}_{}_synthesized".format(step, tag, emo, grp),
+                                tag=tag_ivv,
                             )
+                            audio_path = "/home/rosen/project/FastSpeech2/exp_res/{}".format(tag_ivv)
+                            write(audio_path, 16000, wav_prediction_iiv)
 
                 if step % val_step == 0:
                     model.eval()

@@ -216,8 +216,8 @@ if __name__ == '__main__':
     idx_emo_dict = base_dir + "ESD/metadata_new.json"
 
     # Show Intra- and Inter- variation vis after train
-    #initiate_iiv_train(emo_emb_dir, psd_emb_dir, idx_emo_dict)
+    initiate_iiv_train(emo_emb_dir, psd_emb_dir, idx_emo_dict)
 
     # get trained iiv embed give best model
     best_model = os.path.join(base_dir, "IIV/best_iiv_model.pt")
-    get_trained_iiv_emb(emo_emb_dir, psd_emb_dir, idx_emo_dict, ref_embs, best_model)
+    #get_trained_iiv_emb(emo_emb_dir, psd_emb_dir, idx_emo_dict, ref_embs, best_model)

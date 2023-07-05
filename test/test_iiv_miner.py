@@ -6,7 +6,10 @@ from IIV.iiv_miner import IIVMiner
 from pytorch_metric_learning import distances
 
 import numpy as np
-def test_iiv_miner():
+@pytest.mark.parametrize("choose_anchor", [(False)])
+def test_iiv_miner(
+        choose_anchor
+):
     torch.manual_seed(0)
     batch = 36
     emo_nums = 4
@@ -31,6 +34,7 @@ def test_iiv_miner():
         intra_distance=distances.CosineSimilarity(),
         inter_type_of_triplets="semihard",
         intra_type_of_triplets="semihard",
+        choose_anchor=choose_anchor
     )
 
     inter_indices_tuple, intra_indices_tuple_dict = iivminer.mine(

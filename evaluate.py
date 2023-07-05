@@ -11,6 +11,7 @@ from utils.tools import to_device, log, synth_one_sample, synth_one_sample_iiv
 from model import FastSpeech2Loss
 from dataset import Dataset
 import numpy as np
+from scipy.io.wavfile import write
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -140,16 +141,20 @@ def evaluate_fastIIV(model, step, configs, logger=None, vocoder=None, iiv_embs=N
                                 fig=fig_iiv,
                                 tag="Validation/step_{}_{}_{}_{}".format(step, tag, emo, grp),
                             )
+                            # write audio
                             sampling_rate = preprocess_config["preprocessing"]["audio"][
                                 "sampling_rate"
                             ]
+                            tag_val = "Validation/step_{}_{}_{}_{}_synthesized".format(step, tag, emo, grp)
                             log(
                                 logger,
                                 audio=wav_prediction_iiv,
                                 sampling_rate=sampling_rate,
-                                tag="Validation/step_{}_{}_{}_{}_synthesized".format(step, tag, emo, grp),
+                                tag=tag_val,
                             )
-                    signal = False
+                            audio_path = "/home/rosen/project/FastSpeech2/exp_res/{}".format(tag_val)
+                            write(audio_path, 16000, wav_prediction_iiv)
+                signal = False
 
 
     loss_means = [loss_sum / len(dataset) for loss_sum in loss_sums]
@@ -174,18 +179,26 @@ def evaluate_fastIIV(model, step, configs, logger=None, vocoder=None, iiv_embs=N
             tag="Validation/step_{}_{}".format(step, tag),
         )
         sampling_rate = preprocess_config["preprocessing"]["audio"]["sampling_rate"]
+
+        tag_val = "Validation/step_{}_{}_reconstructed".format(step, tag)
         log(
             logger,
             audio=wav_reconstruction,
             sampling_rate=sampling_rate,
-            tag="Validation/step_{}_{}_reconstructed".format(step, tag),
+            tag=tag_val,
         )
+        audio_path = "/home/rosen/project/FastSpeech2/exp_res/{}".format(tag_val)
+        write(audio_path, 16000, wav_reconstruction)
+
+        tag_val = "Validation/step_{}_{}_synthesized".format(step, tag)
         log(
             logger,
             audio=wav_prediction,
             sampling_rate=sampling_rate,
             tag="Validation/step_{}_{}_synthesized".format(step, tag),
         )
+        audio_path = "/home/rosen/project/FastSpeech2/exp_res/{}".format(tag_val)
+        write(audio_path, 16000, wav_prediction)
 
     return message
 

@@ -8,6 +8,7 @@ import scipy
 from audio.tools import get_mel_from_wav
 from utils.model import vocoder_infer, get_vocoder
 from scipy.io.wavfile import write
+import sys
 
 device = torch.device("cpu")
 #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -21,7 +22,7 @@ wav_f2 = "/home/rosen/project/FastSpeech2/0018_001204.wav"  # female
 
 
 grd_wav = "/home/rosen/project/FastSpeech2/0014_001606.wav"
-
+#torch.set_printoptions(threshold=10_000)
 # librosa mel
 y, sr = librosa.load(wav_f2, sr=16000)
 
@@ -83,6 +84,7 @@ if True:
     from speechbrain.pretrained import HIFIGAN
     mel = torch.from_numpy(np.load(mel_f2, allow_pickle=True)).T.float()
 
+    print(mel, mel.size())
     hifi_gan = HIFIGAN.from_hparams(source="speechbrain/tts-hifigan-libritts-16kHz", savedir="tmpdir")
     #mel_specs = torch.rand(2, 80, 298)
 
