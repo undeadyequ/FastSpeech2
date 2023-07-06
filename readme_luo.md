@@ -13,11 +13,11 @@
 ## 1. Dataset
 - ESD
 ## 2. Preprocess
+### 2.1 Preprocess for FastSpeech2
 Previously, get wav2net and opensmile embeddings from ESD dataset by run
 ```
 python3 
 ```
-
 
 First, Pair wav and text for alignment by running 
 ```
@@ -39,11 +39,25 @@ to align the corpus and then run the preprocessing script.
 ```
 python3 preprocess.py config/LJSpeech/preprocess.yaml
 ```
-
 Third, run the preprocessing script by
 ```
 python3 preprocess.py config/LJSpeech/preprocess.yaml
 ```
+
+### 2.1 Preprocess for IIV training
+- get_optimal_clusterN
+```
+python3 preprocess.py config/LJSpeech/preprocess.yaml
+```
+- check_contrib_dims
+```
+python3 preprocess.py config/LJSpeech/preprocess.yaml
+```
+- clustering
+```
+python3 preprocess.py config/LJSpeech/preprocess.yaml
+```
+
 
 ## 3. Start Train
 - Train IIV model
@@ -77,6 +91,14 @@ tensorboard --logdir output/log/ESD
 
 
 # Inference
+- get iiv stats 
+  - Extract mean_anchors_distance
+  - Extract_mean_anchors (equal to representative embeddings)
+    - mean_anchors is used for iiv embeddings training
+    - repr embeddings is used for inference
+```
+python3 preprocess.py config/LJSpeech/preprocess.yaml
+```
 
 ## 1. preprocess
 - process_utterance
