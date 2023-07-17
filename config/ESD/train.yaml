@@ -18,3 +18,14 @@ step:
   synth_step: 100
   val_step: 100
   save_step: 3000
+iiv_optimizer:
+  batch_size: 512
+  lr: 0.01
+  distance: "cosine"
+  lossType: "TripletMarginLoss"
+  reducer: "ThresholdReducer"
+iiv_miner:
+  mean_anchor: False
+  inter_margin: 0.3
+  intra_margin: 0.2
+  inter_weight: 0.3

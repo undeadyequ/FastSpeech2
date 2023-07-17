@@ -1,363 +1,261 @@
-## Problem
-- The number of intra triplets is too small.
-  - when batch = 100, all_samples > 10000, emo=5, grp=3
-    - 46, 0, 0, 0 (emo1 -> emo5)
-
-emos = []
-groups = []
-
-
--> check samples distribution in each group for every emotion
-- Problem: The intra loss is not decreased at all
-  - When joint train inter and intra loss, the inter decrease but intra increase
-- Maybe
-  - The group labels is wrong that similar embeddings are assigned different grp label
-  - The samples in certain grp is compleltely more than others
-- Solution
-  - check emo_group_stats, emo_group_psdSDmin3
-
-emo_groups = {
-"emo1": {"0": (num0, distance_sum), "1": (num1, distance_sum)},
-}
+# Problem
+- IIV embeddings distribution is not intra- descrimitive
+  - even use intra-only training ?
+  - The distr of intra-only training is converge to less point than that of inter and intra training
+  - The w=0.3 separete intra better than w=0.7
+- Style of ESD is not that clear
+  - EmoV-DB is not parallel, is ok?
+- Set separation evaluation
 
 
-emo_group_psdSDmin3 = {
-"emo1": {"0": ["pitch", "energy", "?"], "1": (num1, distance_sum)},
-}
+# Task
+- Test attention score given different emo/cluster
+- Better cluster separation (Loss) -> only 
+  - Intra_margin 0.2 -> 0.1
+- Better synthesized emotional audio
+  - ESD -> EmoV-DB
+- Intensity
+
+## K-means clustering result
+- samples distribution in cluster
+- contribute prosody by fp value
+- mean of contribute prosody for each cluster
+
+```
+Happy: Total 3197, Cluster_distr:{0: 3051, 1: 146}
+Angry: Total 3197, Cluster_distr:{0: 3196, 1: 1}, one_element_id:['0016_000482']
+Neutral: Total 3195, Cluster_distr:{0: 3194, 1: 1}, one_element_id:['0011_000244']
+Surprise: Total 3197, Cluster_distr:{0: 3196, 1: 1}, one_element_id:['0011_001657']
+Sad: Total 3199, Cluster_distr:{0: 3074, 1: 124, 2: 1}, one_element_id:['0013_001189']
+
+Rejected dimension:43
+emo:Happy
+dim_fpValue_name
+(7, (8272.979179832355, 0.0, 'F0semitoneFrom27.5Hz_sma3nz_stddevRisingSlope'))
+(6, (5957.670711125929, 0.0, 'F0semitoneFrom27.5Hz_sma3nz_meanRisingSlope'))
+cls_contribDim_mean:
+{0: {7: 76.40261, 6: 91.59863}, 1: {7: 950.6254, 6: 716.818}}
+
+Rejected dimension:4
+emo:Angry
+dim_fpValue_name
+(51, (500771.1534533934, 0.0, 'slopeV500 - 1500_sma3nz_stddevNorm'))
+(12, (6.702843905665723, 0.00966958642050155, 'loudness_sma3_percentile20.0'))
+cls_contribDim_mean:
+{0: {51: -1.8005936, 12: 0.033792235}, 1: {51: -37295.926, 12: 0.09066387}}
+
+Rejected dimension:4
+emo:Neutral
+dim_fpValue_name
+(27, (44521.43236623274, 0.0, 'logRelF0 - H1 - H2_sma3nz_stddevNorm'))
+(20, (13.731169552216194, 0.0002145019349511059, 'jitterLocal_sma3nz_amean'))
+cls_contribDim_mean:
+{0: {27: 0.46332216, 20: 0.031113993}, 1: {27: -22376.957, 20: 0.07964794}}
+
+Rejected dimension:3
+emo:Surprise
+dim_fpValue_name
+(27, (309532.61506744905, 0.0, 'logRelF0 - H1 - H2_sma3nz_stddevNorm'))
+(17, (5.094824155279172, 0.02406461080226749, 'loudness_sma3_stddevRisingSlope'))
+cls_contribDim_mean:
+{0: {27: 0.8328492, 17: 4.583166}, 1: {27: 29302.355, 17: 9.090978}}
+
+Rejected dimension:37
+emo:Sad
+dim_fpValue_name
+(51, (119877.89445524792, 0.0, 'slopeV500 - 1500_sma3nz_stddevNorm'))
+(7, (3101.447741250889, 0.0, 'F0semitoneFrom27.5Hz_sma3nz_stddevRisingSlope'))
+(6, (2191.6572932804465, 0.0, 'F0semitoneFrom27.5Hz_sma3nz_meanRisingSlope'))
+cls_contribDim_mean:
+{0: {51: -2.1296902, 7: 100.56144, 6: 113.49736}, 1: {51: -10.926141, 7: 1039.4904, 6: 1102.7955}, 2: {51: -18559.893, 7: 141.74426, 6: 211.20401}}
+```
 
 
-## 2 fc, (batch_size = 512), Inter-triplet
-Epoch 1 Iteration 0: Loss = 0.18(inter:0.18, intra:0.00), Number of inter- and intra-triplets = 11404398, 0
-Epoch 1 Iteration 10: Loss = 0.16(inter:0.16, intra:0.00), Number of inter- and intra-triplets = 8433786, 0
-Epoch 1 Iteration 20: Loss = 0.12(inter:0.12, intra:0.00), Number of inter- and intra-triplets = 3297868, 0
-Epoch 1 Iteration 30: Loss = 0.12(inter:0.12, intra:0.00), Number of inter- and intra-triplets = 3463297, 0
-best acc: 0.1, save to best_iiv_model.pt
-Epoch 2 Iteration 0: Loss = 0.12(inter:0.12, intra:0.00), Number of inter- and intra-triplets = 3455640, 0
-Epoch 2 Iteration 10: Loss = 0.12(inter:0.12, intra:0.00), Number of inter- and intra-triplets = 3621649, 0
-Epoch 2 Iteration 20: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2329681, 0
-Epoch 2 Iteration 30: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2174929, 0
-best acc: 0.2, save to best_iiv_model.pt
-Epoch 3 Iteration 0: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 3089341, 0
-Epoch 3 Iteration 10: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2656713, 0
-Epoch 3 Iteration 20: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2375413, 0
-Epoch 3 Iteration 30: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2367657, 0
-best acc: 0.30000000000000004, save to best_iiv_model.pt
-Epoch 4 Iteration 0: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2451508, 0
-Epoch 4 Iteration 10: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2395535, 0
-Epoch 4 Iteration 20: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2284877, 0
-Epoch 4 Iteration 30: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2551647, 0
-best acc: 0.4, save to best_iiv_model.pt
-Epoch 5 Iteration 0: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2849899, 0
-Epoch 5 Iteration 10: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2290894, 0
-Epoch 5 Iteration 20: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2534636, 0
-Epoch 5 Iteration 30: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2409625, 0
-best acc: 0.5, save to best_iiv_model.pt
-Epoch 6 Iteration 0: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2184762, 0
-Epoch 6 Iteration 10: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2755791, 0
+## IIV embedding training
+- Hyper, loss, and triplet sample nums
+
+- iiv_conv2d_anchorFalse_02_02_w07_-1
+
+Epoch 1 Iteration 0: Loss = 0.15, inter:0.18, intra:0.07-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.18,0.0,0.18, Number of inter- and intra-triplets = 11545165, 0_0_21129_0_14684
+Epoch 1 Iteration 10: Loss = 0.10, inter:0.12, intra:0.05-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.12, Number of inter- and intra-triplets = 4196414, 0_0_11069_0_4562
+Epoch 1 Iteration 20: Loss = 0.11, inter:0.12, intra:0.08-> Angry,Surprise,Sad,Neutral,Happy : 0.11,0.0,0.13,0.0,0.13, Number of inter- and intra-triplets = 3468359, 1058_0_12930_0_8762
+Epoch 1 Iteration 30: Loss = 0.10, inter:0.12, intra:0.05-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.12,0.0,0.12, Number of inter- and intra-triplets = 4208136, 0_0_3935_0_11903
+best acc: 0.1, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_02_w07.pt
+Epoch 2 Iteration 0: Loss = 0.10, inter:0.12, intra:0.05-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.14,0.0,0.11, Number of inter- and intra-triplets = 3518206, 0_0_6428_0_4388
+Epoch 2 Iteration 10: Loss = 0.10, inter:0.12, intra:0.05-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.13,0.0,0.10, Number of inter- and intra-triplets = 3049914, 0_0_11073_0_4127
+Epoch 2 Iteration 20: Loss = 0.09, inter:0.12, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.10, Number of inter- and intra-triplets = 3000866, 0_0_6240_0_3589
+Epoch 2 Iteration 30: Loss = 0.09, inter:0.11, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.10, Number of inter- and intra-triplets = 2191019, 0_0_3403_0_2668
+best acc: 0.2, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_02_w07.pt
+Epoch 3 Iteration 0: Loss = 0.09, inter:0.11, intra:0.05-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.10,0.0,0.11, Number of inter- and intra-triplets = 2669319, 0_0_2004_0_5639
+Epoch 3 Iteration 10: Loss = 0.09, inter:0.11, intra:0.05-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.12,0.0,0.11, Number of inter- and intra-triplets = 2626965, 0_0_11763_0_2315
+Epoch 3 Iteration 20: Loss = 0.09, inter:0.11, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.10, Number of inter- and intra-triplets = 2526839, 0_0_5027_0_1317
+Epoch 3 Iteration 30: Loss = 0.09, inter:0.11, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.08,0.0,0.10, Number of inter- and intra-triplets = 2299355, 0_0_936_0_11493
+best acc: 0.30000000000000004, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_02_w07.pt
+Epoch 4 Iteration 0: Loss = 0.09, inter:0.11, intra:0.05-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.10,0.0,0.12, Number of inter- and intra-triplets = 3003694, 0_0_6200_0_5341
+Epoch 4 Iteration 10: Loss = 0.09, inter:0.11, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.11, Number of inter- and intra-triplets = 2367720, 0_0_15175_0_11006
+Epoch 4 Iteration 20: Loss = 0.09, inter:0.11, intra:0.05-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.11, Number of inter- and intra-triplets = 2577261, 0_0_4345_0_5377
+Epoch 4 Iteration 30: Loss = 0.09, inter:0.11, intra:0.05-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.11, Number of inter- and intra-triplets = 2269200, 0_0_3381_0_5694
+best acc: 0.4, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_02_w07.pt
+Epoch 5 Iteration 0: Loss = 0.09, inter:0.11, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.10,0.0,0.10, Number of inter- and intra-triplets = 2162358, 0_0_2715_0_7986
+Epoch 5 Iteration 10: Loss = 0.10, inter:0.11, intra:0.07-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.13,0.12,0.0,0.10, Number of inter- and intra-triplets = 2348703, 0_3059_4320_0_5607
+Epoch 5 Iteration 20: Loss = 0.09, inter:0.11, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.10, Number of inter- and intra-triplets = 2254821, 0_0_13820_0_4570
+Epoch 5 Iteration 30: Loss = 0.09, inter:0.11, intra:0.05-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.12,0.0,0.10, Number of inter- and intra-triplets = 2571432, 0_0_8464_0_10156
+best acc: 0.5, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_02_w07.pt
+Epoch 6 Iteration 0: Loss = 0.09, inter:0.11, intra:0.05-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.12,0.0,0.10, Number of inter- and intra-triplets = 2391772, 0_0_4367_0_5231
+Epoch 6 Iteration 10: Loss = 0.09, inter:0.11, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.10, Number of inter- and intra-triplets = 2120761, 0_0_2489_0_4437
+Epoch 6 Iteration 20: Loss = 0.09, inter:0.11, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.10, Number of inter- and intra-triplets = 2241309, 0_0_19301_0_4919
+Epoch 6 Iteration 30: Loss = 0.09, inter:0.11, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.10,0.0,0.10, Number of inter- and intra-triplets = 3246528, 0_0_5125_0_11824
+best acc: 0.6, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_02_w07.pt
+Epoch 7 Iteration 0: Loss = 0.09, inter:0.11, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.10, Number of inter- and intra-triplets = 2424942, 0_0_11236_0_6653
+Epoch 7 Iteration 10: Loss = 0.09, inter:0.11, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.10, Number of inter- and intra-triplets = 2407275, 0_0_12027_0_6731
+Epoch 7 Iteration 20: Loss = 0.09, inter:0.11, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.10,0.0,0.10, Number of inter- and intra-triplets = 2584616, 0_0_5213_0_8012
+Epoch 7 Iteration 30: Loss = 0.09, inter:0.11, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.10,0.0,0.11, Number of inter- and intra-triplets = 2619172, 0_0_6209_0_4837
+best acc: 0.7, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_02_w07.pt
+Epoch 8 Iteration 0: Loss = 0.09, inter:0.11, intra:0.07-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.12,0.10, Number of inter- and intra-triplets = 2511070, 0_0_11993_2882_9172
+Epoch 8 Iteration 10: Loss = 0.09, inter:0.11, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.10, Number of inter- and intra-triplets = 2299744, 0_0_12813_0_4531
+Epoch 8 Iteration 20: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.0,0.0,0.10, Number of inter- and intra-triplets = 2723412, 0_0_0_0_15932
+Epoch 8 Iteration 30: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.10,0.0,0.0, Number of inter- and intra-triplets = 2224052, 0_0_12789_0_0
+best acc: 0.7999999999999999, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_02_w07.pt
+Epoch 9 Iteration 0: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.10,0.0,0.09, Number of inter- and intra-triplets = 2254840, 0_0_4274_0_4082
+Epoch 9 Iteration 10: Loss = 0.09, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.10,0.0,0.10, Number of inter- and intra-triplets = 2291091, 0_0_4653_0_3312
+Epoch 9 Iteration 20: Loss = 0.09, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.10, Number of inter- and intra-triplets = 2186303, 0_0_7153_0_6524
+Epoch 9 Iteration 30: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.12,0.0,0.10, Number of inter- and intra-triplets = 1892027, 0_0_7540_0_2801
+best acc: 0.8999999999999999, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_02_w07.pt
+Epoch 10 Iteration 0: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.10, Number of inter- and intra-triplets = 1843962, 0_0_4874_0_5759
+Epoch 10 Iteration 10: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.08,0.0,0.10, Number of inter- and intra-triplets = 2738613, 0_0_4186_0_4148
+Epoch 10 Iteration 20: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.10,0.0,0.10, Number of inter- and intra-triplets = 1878660, 0_0_6517_0_2060
+Epoch 10 Iteration 30: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.10, Number of inter- and intra-triplets = 1805508, 0_0_9492_0_2244
+best acc: 0.9999999999999999, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_02_w07.pt
+Epoch 11 Iteration 0: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.10,0.0,0.10, Number of inter- and intra-triplets = 2089381, 0_0_12981_0_7385
+Epoch 11 Iteration 10: Loss = 0.09, inter:0.10, intra:0.07-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.09,0.13,0.0,0.10, Number of inter- and intra-triplets = 1871384, 0_1890_6004_0_3141
+Epoch 11 Iteration 20: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.09,0.0,0.10, Number of inter- and intra-triplets = 2026326, 0_0_3746_0_9350
+Epoch 11 Iteration 30: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.10, Number of inter- and intra-triplets = 2170889, 0_0_18561_0_5700
+best acc: 1.0999999999999999, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_02_w07.pt
+Epoch 12 Iteration 0: Loss = 0.08, inter:0.10, intra:0.05-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.12,0.0,0.10, Number of inter- and intra-triplets = 3045163, 0_0_7440_0_5160
+Epoch 12 Iteration 10: Loss = 0.09, inter:0.10, intra:0.05-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.13,0.0,0.11, Number of inter- and intra-triplets = 2254804, 0_0_5067_0_6886
+Epoch 12 Iteration 20: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.12,0.0,0.09, Number of inter- and intra-triplets = 2077713, 0_0_13929_0_5422
+Epoch 12 Iteration 30: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.09, Number of inter- and intra-triplets = 1852085, 0_0_16308_0_7140
+best acc: 1.2, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_02_w07.pt
+Epoch 13 Iteration 0: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.09,0.0,0.09, Number of inter- and intra-triplets = 1809348, 0_0_11009_0_5991
+Epoch 13 Iteration 10: Loss = 0.09, inter:0.10, intra:0.07-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.12,0.10, Number of inter- and intra-triplets = 1828099, 0_0_10968_2997_7106
+Epoch 13 Iteration 20: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.10, Number of inter- and intra-triplets = 2327080, 0_0_21176_0_5527
+Epoch 13 Iteration 30: Loss = 0.08, inter:0.10, intra:0.05-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.13,0.0,0.09, Number of inter- and intra-triplets = 1767516, 0_0_1971_0_5240
+best acc: 1.3, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_02_w07.pt
+Epoch 14 Iteration 0: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.10,0.0,0.10, Number of inter- and intra-triplets = 2103619, 0_0_7562_0_8211
+Epoch 14 Iteration 10: Loss = 0.08, inter:0.10, intra:0.05-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.12,0.0,0.10, Number of inter- and intra-triplets = 1626081, 0_0_9914_0_7513
+Epoch 14 Iteration 20: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.10,0.0,0.10, Number of inter- and intra-triplets = 2305027, 0_0_12376_0_8093
+Epoch 14 Iteration 30: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.10, Number of inter- and intra-triplets = 2097939, 0_0_9688_0_4703
+best acc: 1.4000000000000001, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_02_w07.pt
+Epoch 15 Iteration 0: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.11,0.0,0.10, Number of inter- and intra-triplets = 2075917, 0_0_15995_0_3994
+Epoch 15 Iteration 10: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.10,0.0,0.09, Number of inter- and intra-triplets = 1978536, 0_0_4865_0_5851
+Epoch 15 Iteration 20: Loss = 0.09, inter:0.10, intra:0.06-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.10,0.10,0.0,0.09, Number of inter- and intra-triplets = 1710514, 0_2030_15859_0_7314
+Epoch 15 Iteration 30: Loss = 0.08, inter:0.10, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.10,0.0,0.10, Number of inter- and intra-triplets = 2001140, 0_0_14566_0_10373
+best acc: 1.5000000000000002, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_02_w07.pt
+
+- iiv_conv2d_anchorFalse_02_01_w07_-1 
+Start step 3: train IIV embedding.
+Epoch 1 Iteration 0: Loss = 0.13, inter:0.18, intra:0.03-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.08,0.0,0.08, Number of inter- and intra-triplets = 11259374, 0_0_19951_0_13788
+Epoch 1 Iteration 10: Loss = 0.14, inter:0.19, intra:0.04-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.09,0.0,0.08, Number of inter- and intra-triplets = 9795824, 0_0_16341_0_9380
+Epoch 1 Iteration 20: Loss = 0.10, inter:0.13, intra:0.03-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.06,0.0,0.06, Number of inter- and intra-triplets = 4738715, 0_0_11550_0_8737
+Epoch 1 Iteration 30: Loss = 0.09, inter:0.12, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.06,0.0,0.05, Number of inter- and intra-triplets = 3323142, 0_0_1454_0_2142
+best acc: 0.1, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_01_w07.pt
+Epoch 2 Iteration 0: Loss = 0.09, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2742810, 0_0_4132_0_2512
+Epoch 2 Iteration 10: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2283620, 0_0_3019_0_5015
+Epoch 2 Iteration 20: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2503407, 0_0_3953_0_3584
+Epoch 2 Iteration 30: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2426785, 0_0_2698_0_1714
+best acc: 0.2, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_01_w07.pt
+Epoch 3 Iteration 0: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2416777, 0_0_5650_0_2424
+Epoch 3 Iteration 10: Loss = 0.09, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2349904, 0_0_4420_0_5814
+Epoch 3 Iteration 20: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2418340, 0_0_4201_0_5514
+Epoch 3 Iteration 30: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2261880, 0_0_5595_0_2148
+best acc: 0.30000000000000004, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_01_w07.pt
+Epoch 4 Iteration 0: Loss = 0.09, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2411115, 0_0_7482_0_4418
+Epoch 4 Iteration 10: Loss = 0.09, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2352715, 0_0_5460_0_1939
+Epoch 4 Iteration 20: Loss = 0.09, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2367081, 0_0_15256_0_6790
+Epoch 4 Iteration 30: Loss = 0.09, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.06,0.0,0.04, Number of inter- and intra-triplets = 2676184, 0_0_16263_0_1361
+best acc: 0.4, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_01_w07.pt
+Epoch 5 Iteration 0: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.06, Number of inter- and intra-triplets = 2610915, 0_0_8775_0_1501
+Epoch 5 Iteration 10: Loss = 0.09, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2467641, 0_0_3802_0_3178
+Epoch 5 Iteration 20: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2570078, 0_0_5689_0_4806
+Epoch 5 Iteration 30: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2222852, 0_0_12916_0_3898
+best acc: 0.5, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_01_w07.pt
+Epoch 6 Iteration 0: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2200683, 0_0_10953_0_2195
+Epoch 6 Iteration 10: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2272674, 0_0_3672_0_1728
+Epoch 6 Iteration 20: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2123060, 0_0_10989_0_1681
+Epoch 6 Iteration 30: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2414520, 0_0_12723_0_702
+best acc: 0.6, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_01_w07.pt
+Epoch 7 Iteration 0: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.04, Number of inter- and intra-triplets = 2954320, 0_0_7143_0_2093
+Epoch 7 Iteration 10: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.04,0.0,0.05, Number of inter- and intra-triplets = 2231923, 0_0_4839_0_1827
+Epoch 7 Iteration 20: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2828027, 0_0_11595_0_3052
+Epoch 7 Iteration 30: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.04, Number of inter- and intra-triplets = 2355717, 0_0_4210_0_3936
+best acc: 0.7, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_01_w07.pt
+Epoch 8 Iteration 0: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2337535, 0_0_6469_0_4793
+Epoch 8 Iteration 10: Loss = 0.08, inter:0.11, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 5008857, 0_0_6131_0_6324
+Epoch 8 Iteration 20: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.04,0.0,0.05, Number of inter- and intra-triplets = 2605376, 0_0_3128_0_3483
+Epoch 8 Iteration 30: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2125819, 0_0_3542_0_2418
+best acc: 0.7999999999999999, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_01_w07.pt
+Epoch 9 Iteration 0: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2609372, 0_0_6247_0_2588
+Epoch 9 Iteration 10: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.04, Number of inter- and intra-triplets = 2151084, 0_0_17335_0_2922
+Epoch 9 Iteration 20: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2330573, 0_0_4981_0_2860
+Epoch 9 Iteration 30: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2032185, 0_0_17634_0_4711
+best acc: 0.8999999999999999, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_01_w07.pt
+Epoch 10 Iteration 0: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2329389, 0_0_3971_0_1035
+Epoch 10 Iteration 10: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.04,0.0,0.05, Number of inter- and intra-triplets = 2144343, 0_0_1952_0_4146
+Epoch 10 Iteration 20: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 1887483, 0_0_13245_0_3964
+Epoch 10 Iteration 30: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 3899612, 0_0_10129_0_4090
+best acc: 0.9999999999999999, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_01_w07.pt
+Epoch 11 Iteration 0: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2118057, 0_0_4365_0_1276
+Epoch 11 Iteration 10: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2819755, 0_0_3297_0_2210
+Epoch 11 Iteration 20: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.06,0.0,0.05, Number of inter- and intra-triplets = 3003979, 0_0_12702_0_10904
+Epoch 11 Iteration 30: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.04, Number of inter- and intra-triplets = 2660405, 0_0_3948_0_8648
+best acc: 1.0999999999999999, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_01_w07.pt
+Epoch 12 Iteration 0: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.04,0.0,0.05, Number of inter- and intra-triplets = 2051763, 0_0_3352_0_6157
+Epoch 12 Iteration 10: Loss = 0.08, inter:0.10, intra:0.03-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.05,0.05, Number of inter- and intra-triplets = 1677936, 0_0_8199_1433_3816
+Epoch 12 Iteration 20: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.04, Number of inter- and intra-triplets = 2004561, 0_0_5093_0_2515
+Epoch 12 Iteration 30: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2021501, 0_0_10176_0_6633
+best acc: 1.2, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_01_w07.pt
+Epoch 13 Iteration 0: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2019825, 0_0_1659_0_6805
+Epoch 13 Iteration 10: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 1775256, 0_0_6445_0_4643
+Epoch 13 Iteration 20: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2030143, 0_0_5173_0_7096
+Epoch 13 Iteration 30: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.04,0.0,0.05, Number of inter- and intra-triplets = 1635116, 0_0_852_0_2444
+best acc: 1.3, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_01_w07.pt
+Epoch 14 Iteration 0: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.06,0.0,0.05, Number of inter- and intra-triplets = 3313820, 0_0_12518_0_5619
+Epoch 14 Iteration 10: Loss = 0.07, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 2135878, 0_0_8843_0_3799
+Epoch 14 Iteration 20: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.06,0.0,0.04, Number of inter- and intra-triplets = 2187321, 0_0_13090_0_5539
+Epoch 14 Iteration 30: Loss = 0.07, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.04, Number of inter- and intra-triplets = 1662740, 0_0_3574_0_1506
+best acc: 1.4000000000000001, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_01_w07.pt
+Epoch 15 Iteration 0: Loss = 0.07, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.04,0.0,0.04, Number of inter- and intra-triplets = 1995465, 0_0_4434_0_3672
+Epoch 15 Iteration 10: Loss = 0.08, inter:0.10, intra:0.02-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.05, Number of inter- and intra-triplets = 1652974, 0_0_4211_0_1076
+Epoch 15 Iteration 20: Loss = 0.07, inter:0.10, intra:0.01-> Angry,Surprise,Sad,Neutral,Happy : 0.0,0.0,0.05,0.0,0.0, Number of inter- and intra-triplets = 1675503, 0_0_6418_0_0
+Epoch 15 Iteration 30: Loss = 0.08, inter:0.10, intra:0.03-> Angry,Surprise,Sad,Neutral,Happy : 0.05,0.0,0.05,0.0,0.04, Number of inter- and intra-triplets = 1974982, 2839_0_4379_0_2455
+best acc: 1.5000000000000002, save to /home/rosen/project/FastSpeech2/IIV/iiv_conv2d_anchorFalse_02_01_w07.pt
+Start step 4: save IIV embedding by best model.
+Start step 5: visualize IIV embedding.
 
 
-## 2 fc, (batch_size = 512), Inter- and Intra-triplet 
-Epoch 1 Iteration 0: Loss = 0.19(inter:0.18, intra:0.20), Number of inter- and intra-triplets = 11368062, 15398_30786_31505_3704_17924
-Epoch 1 Iteration 10: Loss = 0.19(inter:0.18, intra:0.21), Number of inter- and intra-triplets = 10633923, 23987_31665_13068_25463_28954
-Epoch 1 Iteration 20: Loss = 0.16(inter:0.13, intra:0.21), Number of inter- and intra-triplets = 7501993, 17766_13979_0_6301_19346
-Epoch 1 Iteration 30: Loss = 0.20(inter:0.13, intra:0.31), Number of inter- and intra-triplets = 7225395, 10973_32391_5843_12012_18121
-best acc: 0.1, save to best_iiv_model.pt
-Epoch 2 Iteration 0: Loss = 0.18(inter:0.13, intra:0.27), Number of inter- and intra-triplets = 7004820, 23910_22965_5660_6368_13191
-Epoch 2 Iteration 10: Loss = 0.22(inter:0.12, intra:0.38), Number of inter- and intra-triplets = 4851359, 13881_19161_9458_10142_7751
-Epoch 2 Iteration 20: Loss = 0.22(inter:0.12, intra:0.37), Number of inter- and intra-triplets = 5563781, 6903_35358_4473_9182_17255
-Epoch 2 Iteration 30: Loss = 0.23(inter:0.12, intra:0.39), Number of inter- and intra-triplets = 5460853, 11499_27941_20653_12035_12109
-best acc: 0.2, save to best_iiv_model.pt
-Epoch 3 Iteration 0: Loss = 0.21(inter:0.12, intra:0.35), Number of inter- and intra-triplets = 5643263, 23688_15540_10439_15005_9304
-Epoch 3 Iteration 10: Loss = 0.22(inter:0.12, intra:0.36), Number of inter- and intra-triplets = 5612283, 17255_5678_13829_1239_5896
-Epoch 3 Iteration 20: Loss = 0.22(inter:0.11, intra:0.39), Number of inter- and intra-triplets = 5837459, 23543_7554_5755_12764_19175
-Epoch 3 Iteration 30: Loss = 0.21(inter:0.11, intra:0.37), Number of inter- and intra-triplets = 5557524, 8210_1855_14771_5366_15296
-best acc: 0.30000000000000004, save to best_iiv_model.pt
-Epoch 4 Iteration 0: Loss = 0.17(inter:0.11, intra:0.27), Number of inter- and intra-triplets = 6038013, 11578_31780_4962_13558_0
-Epoch 4 Iteration 10: Loss = 0.21(inter:0.11, intra:0.36), Number of inter- and intra-triplets = 5838693, 32551_19147_27843_4602_2352
-Epoch 4 Iteration 20: Loss = 0.20(inter:0.11, intra:0.33), Number of inter- and intra-triplets = 6378934, 18550_7244_9791_15099_14871
-Epoch 4 Iteration 30: Loss = 0.22(inter:0.11, intra:0.38), Number of inter- and intra-triplets = 5769436, 24859_4468_8021_20489_21398
-best acc: 0.4, save to best_iiv_model.pt
-Epoch 5 Iteration 0: Loss = 0.20(inter:0.11, intra:0.34), Number of inter- and intra-triplets = 6275005, 23537_13045_10091_10827_17444
-Epoch 5 Iteration 10: Loss = 0.21(inter:0.11, intra:0.36), Number of inter- and intra-triplets = 5732456, 25107_27299_8319_14710_10515
-Epoch 5 Iteration 20: Loss = 0.19(inter:0.11, intra:0.32), Number of inter- and intra-triplets = 6353906, 32921_14656_10389_28894_23174
-Epoch 5 Iteration 30: Loss = 0.20(inter:0.11, intra:0.35), Number of inter- and intra-triplets = 6030640, 14350_20850_14840_14434_22015
-best acc: 0.5, save to best_iiv_model.pt
-Epoch 6 Iteration 0: Loss = 0.21(inter:0.11, intra:0.35), Number of inter- and intra-triplets = 6542539, 10909_17881_14894_11075_9528
-Epoch 6 Iteration 10: Loss = 0.22(inter:0.11, intra:0.40), Number of inter- and intra-triplets = 4872440, 13742_5084_19838_16074_12388
-Epoch 6 Iteration 20: Loss = 0.21(inter:0.11, intra:0.37), Number of inter- and intra-triplets = 5577356, 16634_21241_6605_16788_22294
-Epoch 6 Iteration 30: Loss = 0.22(inter:0.11, intra:0.39), Number of inter- and intra-triplets = 5300348, 50879_10565_32645_20500_19522
-...
+- 
 
-Epoch 17 Iteration 0: Loss = 0.23(inter:0.10, intra:0.43), Number of inter- and intra-triplets = 3584935, 10184_11404_8941_4546_11474
-Epoch 17 Iteration 10: Loss = 0.21(inter:0.10, intra:0.37), Number of inter- and intra-triplets = 4716215, 18725_29475_17447_25669_23846
-Epoch 17 Iteration 20: Loss = 0.17(inter:0.10, intra:0.29), Number of inter- and intra-triplets = 4819188, 20962_29517_10528_0_12137
-Epoch 17 Iteration 30: Loss = 0.25(inter:0.10, intra:0.47), Number of inter- and intra-triplets = 3464055, 17437_36150_23193_14968_15539
+## IIVTTS training best result
+- Hyper, loss, and syntheized audio with different emo/cluster
+  - The emo/cluster vector
 
-## same condition, show intra-loss for each emotion
-Epoch 1 Iteration 0: Loss = 0.18(inter:0.17, intra:0.20->0.20_0.19_0.20_0.19_0.19), Number of inter- and intra-triplets = 11295553, 16187_45170_34730_23010_53629
-Epoch 1 Iteration 10: Loss = 0.20(inter:0.20, intra:0.20->0.19_0.20_0.20_0.20_0.20), Number of inter- and intra-triplets = 10991211, 28267_35545_5414_3905_55706
-Epoch 1 Iteration 20: Loss = 0.20(inter:0.20, intra:0.20->0.19_0.20_0.20_0.20_0.20), Number of inter- and intra-triplets = 11063033, 14274_26805_28699_29056_32192
-Epoch 1 Iteration 30: Loss = 0.20(inter:0.20, intra:0.20->0.20_0.20_0.20_0.20_0.20), Number of inter- and intra-triplets = 11095956, 47048_9535_25906_24385_34468
-best acc: 0.1, save to best_iiv_model.pt
-Epoch 2 Iteration 0: Loss = 0.20(inter:0.20, intra:0.20->0.20_0.20_0.19_0.20_0.20), Number of inter- and intra-triplets = 10900384, 40369_28778_23333_10428_25303
-Epoch 2 Iteration 10: Loss = 0.20(inter:0.20, intra:0.20->0.20_0.20_0.20_0.20_0.19), Number of inter- and intra-triplets = 10996880, 28193_43732_10658_26635_7812
-Epoch 2 Iteration 20: Loss = 0.18(inter:0.20, intra:0.16->0.20_0.20_0.0_0.20_0.20), Number of inter- and intra-triplets = 10936117, 13572_47950_0_20345_23673
-Epoch 2 Iteration 30: Loss = 0.20(inter:0.20, intra:0.20->0.20_0.20_0.20_0.20_0.20), Number of inter- and intra-triplets = 11054144, 8540_10935_17966_7560_28546
-best acc: 0.2, save to best_iiv_model.pt
-Epoch 3 Iteration 0: Loss = 0.20(inter:0.20, intra:0.20->0.19_0.20_0.20_0.19_0.20), Number of inter- and intra-triplets = 10823009, 35662_17410_32263_20484_26784
-Epoch 3 Iteration 10: Loss = 0.20(inter:0.19, intra:0.20->0.20_0.19_0.20_0.20_0.20), Number of inter- and intra-triplets = 10848449, 26460_18945_15548_3922_19833
-Epoch 3 Iteration 20: Loss = 0.20(inter:0.18, intra:0.23->0.22_0.22_0.22_0.22_0.23), Number of inter- and intra-triplets = 10065133, 26097_37434_22807_8529_25409
-Epoch 3 Iteration 30: Loss = 0.22(inter:0.12, intra:0.36->0.37_0.36_0.35_0.35_0.36), Number of inter- and intra-triplets = 4891044, 12381_17749_22350_6008_13628
-best acc: 0.30000000000000004, save to best_iiv_model.pt
-Epoch 4 Iteration 0: Loss = 0.30(inter:0.12, intra:0.58->0.58_0.58_0.57_0.56_0.57), Number of inter- and intra-triplets = 3477770, 7100_13210_7310_9681_7586
-Epoch 4 Iteration 10: Loss = 0.20(inter:0.12, intra:0.32->0.31_0.32_0.32_0.31_0.32), Number of inter- and intra-triplets = 6266759, 28047_29853_2554_11779_25480
-Epoch 4 Iteration 20: Loss = 0.18(inter:0.12, intra:0.26->0.32_0.32_0.32_0.0_0.31), Number of inter- and intra-triplets = 6306100, 13479_5808_14477_0_6259
-Epoch 4 Iteration 30: Loss = 0.24(inter:0.12, intra:0.42->0.40_0.40_0.43_0.42_0.41), Number of inter- and intra-triplets = 5044606, 19356_19151_8597_19353_12069
-best acc: 0.4, save to best_iiv_model.pt
-
-## Remove inter-triplet (w=0)
-
-
-
-conv1d(kernal=3) LSTM FC
-/home/rosen/anaconda3/envs/fastts/bin/python /home/rosen/project/FG-transformer-TTS/IIV/train.py 
-Epoch 1 Iteration 0: Loss = 0.20(inter:0.20, intra:0.00), Number of inter- and intra-triplets = 5659847, 0
-Epoch 1 Iteration 10: Loss = 0.15(inter:0.15, intra:0.00), Number of inter- and intra-triplets = 7505871, 0
-Epoch 1 Iteration 20: Loss = 0.12(inter:0.12, intra:0.00), Number of inter- and intra-triplets = 3165189, 0
-Epoch 1 Iteration 30: Loss = 0.12(inter:0.12, intra:0.00), Number of inter- and intra-triplets = 3006831, 0
-best acc: 0.1, save to best_iiv_model.pt
-Epoch 2 Iteration 0: Loss = 0.12(inter:0.12, intra:0.00), Number of inter- and intra-triplets = 3396729, 0
-Epoch 2 Iteration 10: Loss = 0.12(inter:0.12, intra:0.00), Number of inter- and intra-triplets = 2296147, 0
-Epoch 2 Iteration 20: Loss = 0.12(inter:0.12, intra:0.00), Number of inter- and intra-triplets = 2110273, 0
-Epoch 2 Iteration 30: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2121877, 0
-best acc: 0.2, save to best_iiv_model.pt
-Epoch 3 Iteration 0: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 1952355, 0
-Epoch 3 Iteration 10: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2020191, 0
-Epoch 3 Iteration 20: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 1932578, 0
-Epoch 3 Iteration 30: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2016080, 0
-best acc: 0.30000000000000004, save to best_iiv_model.pt
-Epoch 4 Iteration 0: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 1919186, 0
-Epoch 4 Iteration 10: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 1910023, 0
-Epoch 4 Iteration 20: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 1863267, 0
-Epoch 4 Iteration 30: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2137259, 0
-best acc: 0.4, save to best_iiv_model.pt
-Epoch 5 Iteration 0: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2125391, 0
-Epoch 5 Iteration 10: Loss = 0.12(inter:0.12, intra:0.00), Number of inter- and intra-triplets = 1872001, 0
-Epoch 5 Iteration 20: Loss = 0.20(inter:0.20, intra:0.00), Number of inter- and intra-triplets = 2628218, 0
-Epoch 5 Iteration 30: Loss = 0.20(inter:0.20, intra:0.00), Number of inter- and intra-triplets = 2281794, 0
-best acc: 0.5, save to best_iiv_model.pt
-Epoch 6 Iteration 0: Loss = 0.20(inter:0.20, intra:0.00), Number of inter- and intra-triplets = 2265173, 0
-Epoch 6 Iteration 10: Loss = 0.12(inter:0.12, intra:0.00), Number of inter- and intra-triplets = 3556647, 0
-Epoch 6 Iteration 20: Loss = 0.11(inter:0.11, intra:0.00), Number of inter- and intra-triplets = 2469718, 0
-Epoch 6 Iteration 30: Loss = 0.12(inter:0.12, intra:0.00), Number of inter- and intra-triplets = 4243181, 0
-best acc: 0.6, save to best_iiv_model.pt
-
-
-## New group (w = 0.7)
-
-Epoch 1 Iteration 0: Loss = 0.16(inter:0.18, intra:0.12->0.20,0.0,0.19,0.0,0.20, Number of inter- and intra-triplets = 11237374, 21598_0_120343_0_30829
-Epoch 1 Iteration 10: Loss = 0.21(inter:0.12, intra:0.42->0.72,0.0,0.71,0.0,0.66, Number of inter- and intra-triplets = 3269429, 13369_0_47210_0_3041
-Epoch 1 Iteration 20: Loss = 0.18(inter:0.12, intra:0.32->0.54,0.0,0.54,0.0,0.53, Number of inter- and intra-triplets = 3478139, 4786_0_47283_0_9837
-Epoch 1 Iteration 30: Loss = 0.17(inter:0.12, intra:0.30->0.50,0.0,0.49,0.0,0.49, Number of inter- and intra-triplets = 4278858, 26114_0_66706_0_6998
-best acc: 0.1, save to best_iiv_model.pt
-Epoch 2 Iteration 0: Loss = 0.18(inter:0.12, intra:0.33->0.54,0.0,0.56,0.0,0.54, Number of inter- and intra-triplets = 3874248, 31060_0_54221_0_6111
-Epoch 2 Iteration 10: Loss = 0.16(inter:0.12, intra:0.27->0.45,0.0,0.46,0.0,0.43, Number of inter- and intra-triplets = 4608396, 20919_0_43846_0_7842
-Epoch 2 Iteration 20: Loss = 0.18(inter:0.11, intra:0.36->0.59,0.0,0.60,0.0,0.61, Number of inter- and intra-triplets = 3402052, 14658_0_95871_0_4217
-Epoch 2 Iteration 30: Loss = 0.18(inter:0.11, intra:0.34->0.56,0.0,0.57,0.0,0.57, Number of inter- and intra-triplets = 3504339, 18853_0_48437_0_14788
-best acc: 0.2, save to best_iiv_model.pt
-Epoch 3 Iteration 0: Loss = 0.21(inter:0.11, intra:0.46->0.57,0.0,0.58,0.52,0.59, Number of inter- and intra-triplets = 3005826, 23704_0_45897_1791_16674
-Epoch 3 Iteration 10: Loss = 0.18(inter:0.11, intra:0.32->0.53,0.0,0.54,0.0,0.53, Number of inter- and intra-triplets = 4114127, 18338_0_56772_0_17362
-Epoch 3 Iteration 20: Loss = 0.17(inter:0.11, intra:0.31->0.49,0.0,0.50,0.0,0.53, Number of inter- and intra-triplets = 4418910, 12886_0_90112_0_4117
-Epoch 3 Iteration 30: Loss = 0.18(inter:0.11, intra:0.34->0.55,0.0,0.54,0.0,0.58, Number of inter- and intra-triplets = 3595615, 12526_0_72883_0_4403
-best acc: 0.30000000000000004, save to best_iiv_model.pt
-Epoch 4 Iteration 0: Loss = 0.18(inter:0.11, intra:0.36->0.58,0.0,0.58,0.0,0.60, Number of inter- and intra-triplets = 3496100, 26154_0_82128_0_14953
-Epoch 4 Iteration 10: Loss = 0.17(inter:0.11, intra:0.32->0.55,0.0,0.51,0.0,0.50, Number of inter- and intra-triplets = 3977006, 13330_0_71173_0_40010
-Epoch 4 Iteration 20: Loss = 0.18(inter:0.11, intra:0.33->0.55,0.0,0.56,0.0,0.54, Number of inter- and intra-triplets = 3392794, 20595_0_42396_0_11967
-Epoch 4 Iteration 30: Loss = 0.18(inter:0.11, intra:0.36->0.61,0.0,0.60,0.0,0.56, Number of inter- and intra-triplets = 3082396, 29020_0_93998_0_10505
-best acc: 0.4, save to best_iiv_model.pt
-Epoch 5 Iteration 0: Loss = 0.17(inter:0.11, intra:0.33->0.54,0.0,0.56,0.0,0.53, Number of inter- and intra-triplets = 3551547, 23222_0_49322_0_17822
-Epoch 5 Iteration 10: Loss = 0.17(inter:0.11, intra:0.32->0.53,0.0,0.52,0.0,0.53, Number of inter- and intra-triplets = 3348796, 22535_0_76238_0_2854
-Epoch 5 Iteration 20: Loss = 0.19(inter:0.11, intra:0.39->0.64,0.0,0.63,0.0,0.66, Number of inter- and intra-triplets = 2801114, 22585_0_83403_0_11785
-Epoch 5 Iteration 30: Loss = 0.19(inter:0.11, intra:0.37->0.64,0.0,0.60,0.0,0.61, Number of inter- and intra-triplets = 2975577, 19554_0_48908_0_12782
-best acc: 0.5, save to best_iiv_model.pt
-Epoch 6 Iteration 0: Loss = 0.19(inter:0.11, intra:0.37->0.62,0.0,0.63,0.0,0.57, Number of inter- and intra-triplets = 3186248, 12473_0_50390_0_10965
-Epoch 6 Iteration 10: Loss = 0.18(inter:0.10, intra:0.34->0.55,0.0,0.57,0.0,0.58, Number of inter- and intra-triplets = 3207737, 27192_0_63590_0_21796
-Epoch 6 Iteration 20: Loss = 0.16(inter:0.11, intra:0.29->0.49,0.0,0.48,0.0,0.48, Number of inter- and intra-triplets = 4633081, 27860_0_106636_0_13776
-Epoch 6 Iteration 30: Loss = 0.17(inter:0.11, intra:0.33->0.51,0.0,0.57,0.0,0.58, Number of inter- and intra-triplets = 3584798, 23843_0_65101_0_18974
-best acc: 0.6, save to best_iiv_model.pt
-Epoch 7 Iteration 0: Loss = 0.19(inter:0.10, intra:0.38->0.63,0.0,0.62,0.0,0.62, Number of inter- and intra-triplets = 2723081, 27732_0_60275_0_12425
-Epoch 7 Iteration 10: Loss = 0.18(inter:0.10, intra:0.35->0.56,0.0,0.60,0.0,0.60, Number of inter- and intra-triplets = 2858957, 26880_0_79539_0_4634
-Epoch 7 Iteration 20: Loss = 0.18(inter:0.10, intra:0.37->0.63,0.0,0.62,0.0,0.59, Number of inter- and intra-triplets = 2545893, 16491_0_63113_0_14130
-Epoch 7 Iteration 30: Loss = 0.17(inter:0.10, intra:0.31->0.51,0.0,0.52,0.0,0.51, Number of inter- and intra-triplets = 3956288, 21272_0_99660_0_7570
-best acc: 0.7, save to best_iiv_model.pt
-Epoch 8 Iteration 0: Loss = 0.18(inter:0.10, intra:0.35->0.58,0.0,0.56,0.0,0.61, Number of inter- and intra-triplets = 3003139, 18197_0_81951_0_11317
-Epoch 8 Iteration 10: Loss = 0.14(inter:0.10, intra:0.23->0.60,0.0,0.57,0.0,0.0, Number of inter- and intra-triplets = 3279332, 26498_0_70719_0_0
-Epoch 8 Iteration 20: Loss = 0.16(inter:0.10, intra:0.28->0.47,0.0,0.48,0.0,0.46, Number of inter- and intra-triplets = 3616442, 16062_0_73374_0_16922
-Epoch 8 Iteration 30: Loss = 0.17(inter:0.10, intra:0.34->0.57,0.0,0.55,0.0,0.56, Number of inter- and intra-triplets = 2937035, 28178_0_57102_0_19375
-best acc: 0.7999999999999999, save to best_iiv_model.pt
-
-
-
+## Other
+- Opensmile cluster
 
 In total, 62 parameters are contained in the Geneva
 Minimalistic Standard Parameter Set.
 
-F0semitoneFrom27.5Hz_sma3nz_amean
-F0semitoneFrom27.5Hz_sma3nz_stddevNorm
-F0semitoneFrom27.5Hz_sma3nz_percentile20.0
-F0semitoneFrom27.5Hz_sma3nz_percentile50.0
-F0semitoneFrom27.5Hz_sma3nz_percentile80.0
-F0semitoneFrom27.5Hz_sma3nz_pctlrange0-2
-F0semitoneFrom27.5Hz_sma3nz_meanRisingSlope
-F0semitoneFrom27.5Hz_sma3nz_stddevRisingSlope
-F0semitoneFrom27.5Hz_sma3nz_meanFallingSlope
-F0semitoneFrom27.5Hz_sma3nz_stddevFallingSlope
-loudness_sma3_amean
-loudness_sma3_stddevNorm
-loudness_sma3_percentile20.0
-loudness_sma3_percentile50.0
-loudness_sma3_percentile80.0
-loudness_sma3_pctlrange0-2
-loudness_sma3_meanRisingSlope
-loudness_sma3_stddevRisingSlope
-loudness_sma3_meanFallingSlope
-loudness_sma3_stddevFallingSlope
-jitterLocal_sma3nz_amean
-jitterLocal_sma3nz_stddevNorm
-shimmerLocaldB_sma3nz_amean
-shimmerLocaldB_sma3nz_stddevNorm
-HNRdBACF_sma3nz_amean
-HNRdBACF_sma3nz_stddevNorm
-logRelF0-H1-H2_sma3nz_amean
-logRelF0-H1-H2_sma3nz_stddevNorm
-logRelF0-H1-A3_sma3nz_amean
-logRelF0-H1-A3_sma3nz_stddevNorm
-F1frequency_sma3nz_amean
-F1frequency_sma3nz_stddevNorm
-F1bandwidth_sma3nz_amean
-F1bandwidth_sma3nz_stddevNorm
-F1amplitudeLogRelF0_sma3nz_amean
-F1amplitudeLogRelF0_sma3nz_stddevNorm
-F2frequency_sma3nz_amean
-F2frequency_sma3nz_stddevNorm
-F2amplitudeLogRelF0_sma3nz_amean
-F2amplitudeLogRelF0_sma3nz_stddevNorm
-F3frequency_sma3nz_amean
-F3frequency_sma3nz_stddevNorm
-F3amplitudeLogRelF0_sma3nz_amean
-F3amplitudeLogRelF0_sma3nz_stddevNorm
-alphaRatioV_sma3nz_amean
-alphaRatioV_sma3nz_stddevNorm
-hammarbergIndexV_sma3nz_amean
-hammarbergIndexV_sma3nz_stddevNorm
-slopeV0-500_sma3nz_amean
-slopeV0-500_sma3nz_stddevNorm
-slopeV500-1500_sma3nz_amean
-slopeV500-1500_sma3nz_stddevNorm
-alphaRatioUV_sma3nz_amean
-hammarbergIndexUV_sma3nz_amean
-slopeUV0-500_sma3nz_amean
-slopeUV500-1500_sma3nz_amean
-loudnessPeaksPerSec
-VoicedSegmentsPerSec
-MeanVoicedSegmentLengthSec
-StddevVoicedSegmentLengthSec
-MeanUnvoicedSegmentLength
-StddevUnvoicedSegmentLength
+- Name of useful prosody
+  - **logRelF0**: 
+  The measure H1-H2, the difference in amplitude between the first and second harmonics, is frequently used to distinguish phonation types and to characterize differences across voices and genders. While H1-H2 can differentiate voices and is used by listeners to perceive changes in voice quality, its relation to voice articulation is less straightforward. 
+  - F0semitoneFrom27.5Hz_sma3nz_stddevRisingSlope (**F0_riseSlope_SD**)
+  - F0semitoneFrom27.5Hz_sma3nz_meanRisingSlope (**F0_riseSlope_mean**)
+    - mean and standard deviation of the slope of rising/falling signal parts
+  - **slopeV500 - 1500_sma3nz_stddevNorm**
+  linear regression slope of the logarithmic power spectrum within the two given bands.
 
-Emotion distribution: 
-
-3197 audios in Happy
-3197 audios in Angry
-3195 audios in Neutral
-3197 audios in Surprise
-3199 audios in Sad
-
-emo_clusterN = {
-    "Angry": 3,
-    "Surprise": 3,
-    "Sad": 3,
-    "Neutral": 3,
-    "Happy": 3
-}
-
-emo_optimal_clusterN = {
-    "Angry": 3,
-    "Surprise": 2,
-    "Sad": 4,
-    "Neutral": 2,
-    "Happy": 2
-}
-
-
-
-start : Happy
-Rejected dimension Nums are 43
-(7, (8272.97917983235, 0.0, 'F0semitoneFrom27.5Hz_sma3nz_stddevRisingSlope'))
-(6, (5957.670711125929, 0.0, 'F0semitoneFrom27.5Hz_sma3nz_meanRisingSlope'))
-
-
-start : Angry
-Rejected dimension Nums are 41
-(51, (250307.2986151871, 0.0, 'slopeV500 - 1500_sma3nz_stddevNorm'))
-(7, (3998.97808142092, 0.0, 'F0semitoneFrom27.5Hz_sma3nz_stddevRisingSlope'))
-(6, (2285.123573831205, 0.0, 'F0semitoneFrom27.5Hz_sma3nz_meanRisingSlope'))
-
-start : Neutral
-Rejected dimension Nums are 4
-(27, (44521.43236623274, 0.0, 'logRelF0 - H1 - H2_sma3nz_stddevNorm'))
-
-start : Surprise
-Rejected dimension Nums are 3
-(27, (309532.61506744905, 0.0, 'logRelF0 - H1 - H2_sma3nz_stddevNorm'))
-
-start : Sad
-Rejected dimension Nums are 55
-(51, (79907.38863334325, 0.0, 'slopeV500 - 1500_sma3nz_stddevNorm'))
-(7, (2154.4426057002097, 0.0, 'F0semitoneFrom27.5Hz_sma3nz_stddevRisingSlope'))
-(6, (1528.2080025670027, 0.0, 'F0semitoneFrom27.5Hz_sma3nz_meanRisingSlope'))
-(36, (1499.098732559102, 0.0, 'F2frequency_sma3nz_amean'))
-
-
-- **logRelF0**: 
-The measure H1-H2, the difference in amplitude between the first and second harmonics, is frequently used to distinguish phonation types and to characterize differences across voices and genders. While H1-H2 can differentiate voices and is used by listeners to perceive changes in voice quality, its relation to voice articulation is less straightforward. 
-
-- F0semitoneFrom27.5Hz_sma3nz_stddevRisingSlope (**F0_riseSlope_SD**)
-- F0semitoneFrom27.5Hz_sma3nz_meanRisingSlope (**F0_riseSlope_mean**)
-mean and standard deviation of the slope of rising/falling signal parts
-
-
-- **slopeV500 - 1500_sma3nz_stddevNorm**
-linear regression slope of the logarithmic power spectrum within the two given bands.
-
-
-reference paper of opensmile (page 5):
+- reference paper of opensmile (page 5):
 https://sail.usc.edu/publications/files/eyben-preprinttaffc-2015.pdf
 
-
-
-Spectral slope description powerpoint
+- Spectral slope description powerpoint
 https://www.isca-speech.org/archive_open/archive_papers/spkd2008/material/spkd_007_p.pdf
-
-
-
-- Contributable dimension per cluster..
-/home/rosen/anaconda3/envs/fastts/bin/python /home/rosen/project/FastSpeech2/preprocess_ESD.py 
-start : Happy
-{0: {7: 950.6254, 6: 716.818}, 1: {7: 76.40261, 6: 91.59863}}
-
-
-start : Angry
-{0: {51: -1.932109, 7: 1193.8047}, 1: {51: -1.7930673, 7: 132.99066}, 2: {51: -37295.926, 7: 113.0735}}
-
-start : Neutral
-{0: {27: 0.46332216}, 1: {27: -22376.957}}
-
-start : Surprise
-{0: {27: 0.8328492}, 1: {27: 29302.355}}
-
-start : Sad
-{0: {51: -11.148005, 7: 1049.5886}, 1: {51: -1.7410944, 7: 122.96218}, 2: {51: -18559.893, 7: 141.74426}, 3: {51: -2.5960681, 7: 74.79896}}
-Process finished with exit code 0
-
-

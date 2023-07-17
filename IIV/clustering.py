@@ -77,7 +77,7 @@ def select_contribute_dim(speech_feature_emb, group_id, dimension_name=None, emo
             psddim_fpValue_reject[dim] = (psddim_fpValue[dim][0], psddim_fpValue[dim][1], dimension_name[dim])
     # Sort by p-value
     psddim_fpValue_reject_sort = sorted(psddim_fpValue_reject.items(), key=lambda item: item[1][0], reverse=True)
-    print("Rejected dimension Nums are {}".
+    print("Rejected dimension:{}".
           format(len(psddim_fpValue_reject_sort)))
     #print(*psddim_fpValue_reject_sort, sep="\n")
 
@@ -110,14 +110,13 @@ def select_contribute_dim(speech_feature_emb, group_id, dimension_name=None, emo
             dim_values = embs[:, contrb]
             dim_values_means = np.mean(dim_values)
             cls_contribDim_value[cls][contrb] = dim_values_means
-
     return psddim_fpValue_reject_sort_topContrb, cls_contribDim_value
 
 def get_kmeans_label(
         speech_feature_emb,
         n_clusters = 4,
         random_state = 0,
-        n_init="auto"
+        n_init=30
 ):
     """
     Get group ids for samples of each category
@@ -133,9 +132,9 @@ def get_kmeans_label(
         speech_feature_emb = np.array(speech_feature_emb)
     # Cluster
     kmeans = KMeans(
-        n_clusters=n_clusters
-        #random_state=random_state,
-        #n_init=n_init
+        n_clusters=n_clusters,
+        random_state=random_state,
+        n_init=n_init
     ).fit(speech_feature_emb)
     group_id = kmeans.labels_
     return group_id

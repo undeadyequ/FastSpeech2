@@ -18,5 +18,5 @@ indices_tuple = (3, 807711)
 
 
 train.my
-[main.py](main.py)
+[main.py](../main.py)
 

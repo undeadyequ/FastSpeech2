@@ -106,7 +106,7 @@ class FastSpeech2_IIV(nn.Module):
             #    style_emb = self.iiv_embeder(speech)
             if self.concatenator is not None:
                 style_emb = self.style_lr(style_emb)
-                output = self.concatenator(output, style_emb)
+                output, att_score = self.concatenator(output, style_emb)
             else:
                 output = output + style_emb.unsqueeze(1).expand(-1, max_src_len, -1)
         if self.speaker_emb is not None:
@@ -140,15 +140,30 @@ class FastSpeech2_IIV(nn.Module):
 
         postnet_output = self.postnet(output) + output
 
-        return (
-            output,
-            postnet_output,
-            p_predictions,
-            e_predictions,
-            log_d_predictions,
-            d_rounded,
-            src_masks,
-            mel_masks,
-            src_lens,
-            mel_lens,
-        )
+        if self.concatenator is not None:
+            return (
+                output,
+                postnet_output,
+                p_predictions,
+                e_predictions,
+                log_d_predictions,
+                d_rounded,
+                src_masks,
+                mel_masks,
+                src_lens,
+                mel_lens,
+                att_score
+            )
+        else:
+            return (
+                output,
+                postnet_output,
+                p_predictions,
+                e_predictions,
+                log_d_predictions,
+                d_rounded,
+                src_masks,
+                mel_masks,
+                src_lens,
+                mel_lens,
+            )

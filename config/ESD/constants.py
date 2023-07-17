@@ -74,10 +74,18 @@ emo_optimal_clusterN_ver1 = {
 
 emo_optimal_clusterN = {
         "Angry": 2,
-        "Surprise": 1,
+        "Surprise": 2,
         "Sad": 3,
-        "Neutral": 1,
+        "Neutral": 2,
         "Happy": 2
+}
+
+emo_optimal_clusterN_test = {
+        "Angry": 3,
+        "Surprise": 3,
+        "Sad": 4,
+        "Neutral": 3,
+        "Happy": 3
 }
 
 # The number of contribute dims
@@ -87,4 +95,28 @@ emo_contri_dimN = {
         "Sad": 2,
         "Neutral": 1,
         "Happy": 2
+}
+
+emo_num = {
+    "Angry": 0,
+    "Surprise": 1,
+    "Sad": 2,
+    "Neutral": 3,
+    "Happy": 4
+}
+
+num_emo = {
+    0: "Angry",
+    1: "Surprise",
+    2: "Sad",
+    3: "Neutral",
+    4: "Happy"
+}
+
+emo_contrdim = {
+        "Neutral": (6, 7),
+        "Sad": (6, 7),
+        "Angry": (6, 51),
+        "Surprise": (6, 7),
+        "Happy": (6, 7),
 }

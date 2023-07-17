@@ -34,5 +34,5 @@ class CrossAttention(nn.Module):
         phoneme = phoneme + style_emb2
 
         phoneme = phoneme.transpose(1, 0)
-        return phoneme
+        return phoneme, style_attn
 

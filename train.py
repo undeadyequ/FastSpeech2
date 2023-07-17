@@ -109,7 +109,7 @@ def main(args, configs):
                 batch = to_device(batch, device)
 
                 # Forward
-                output = model(*(batch[2:]))
+                output, att_score = model(*(batch[2:]))
 
                 # Cal Loss
                 losses = Loss(batch, output)
@@ -179,7 +179,7 @@ def main(args, configs):
                         for grp, iiv in grp_iiv.items():
                             iiv_embs_torch = torch.from_numpy(np.load(os.path.join(iiv_embs_dir, iiv))).\
                                 to(device).expand(batch_size, -1)
-                            output_iiv = model(*(batch[2:-1]), style_emb=iiv_embs_torch)
+                            output_iiv, att_score = model(*(batch[2:-1]), style_emb=iiv_embs_torch)
                             fig_iiv, wav_prediction_iiv, tag = synth_one_sample_iiv(
                                 batch,
                                 output_iiv,

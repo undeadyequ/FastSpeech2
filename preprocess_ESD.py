@@ -18,17 +18,18 @@ import librosa
 import soundfile as sf
 from g2p_en import G2p
 from wav2vec2.wrapper import MinimalClassifier
-from config.ESD.constants import emo_contri_dimN, emo_optimal_clusterN
+from config.ESD.constants import emo_contri_dimN, emo_optimal_clusterN, emo_optimal_clusterN_ver1, emo_optimal_clusterN_test
 
 import sys
 sys.path.insert(0, '/home/rosen/project/FG-transformer-TTS/waveglow/tacotron2')
 from layers import TacotronSTFT
 
-import opensmile
 from IIV.clustering import get_kmeans_label, choose_optimal_k, select_contribute_dim
 import shutil
 import yaml
 from config.ESD.constants import dimension_name
+from collections import Counter
+from audio.psd_extract import extract_opensmile
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--datadir', type=str, required=False, default="/mnt/sdb2/ESD/")
@@ -55,7 +56,8 @@ emo_clusterN = {
 
 ##? Only choose english
 
-def prepare_esd():
+def prepare_esd(psd_extract=False):
+
     args = parser.parse_args()
     stft = TacotronSTFT(filter_length=args.filter_length,
                         hop_length=args.hop_length,
@@ -77,6 +79,8 @@ def prepare_esd():
     Path(emo_reps_dir).mkdir(parents=True, exist_ok=True)
     raw_dir = os.path.join(args.outputdir, '16k_wav')
     Path(raw_dir).mkdir(parents=True, exist_ok=True)
+    psd_reps_dir = os.path.join(args.outputdir, 'psd_reps')
+    Path(psd_reps_dir).mkdir(parents=True, exist_ok=True)
 
     metadata = dict()
     root = Path(args.datadir)
@@ -130,11 +134,16 @@ def prepare_esd():
         })
     metadata = {k: v for k, v in metadata.items() if 'length' in v}
 
+    # extract and save opensmile features from each audio
+    if psd_extract:
+        extract_opensmile(raw_dir, psd_reps_dir)
+
     with open(os.path.join(args.outputdir, 'metadata.json'), 'w') as f:
         json.dump(metadata, f, indent=4)
 
 
-def prepare_grp_id(data_dir=".", psd_extract=False, emo_clusterN=emo_clusterN):
+def prepare_grp_id(data_dir=".", psd_extract=False, emo_clusterN=emo_clusterN,
+                   out_meta="metadata_new.json"):
     """
     Get kmeans group id for each emotion and append it to metadata.json, while the
     original metadata.json is saved to metadata_bk.json
@@ -149,7 +158,7 @@ def prepare_grp_id(data_dir=".", psd_extract=False, emo_clusterN=emo_clusterN):
     psd_reps_dir = os.path.join(data_dir, "psd_reps")
     audio_dir = os.path.join(data_dir, "16k_wav")
     meta_data = os.path.join(data_dir, "metadata.json")
-    meta_data_new = os.path.join(data_dir, "metadata_new.json")
+    meta_data_new = os.path.join(data_dir, out_meta)
 
     grp_psd_data = os.path.join(data_dir, "emo_grpPSD.npy")
     shutil.copy(meta_data, meta_data_new)
@@ -234,34 +243,14 @@ def check_contribute_score(psd_reps_dir, meta_data, emo_optimal_clusterN, emo_co
     for emo, psdID in emo_psdId_dict.items():
         psd_embs = psdID["psd"]
         group_ids = get_kmeans_label(psd_embs, emo_optimal_clusterN[emo])
-        print("start : {}".format(emo))
         psddim_fpValue_reject_sort_topContrb, cls_contribDim_value = \
             select_contribute_dim(psd_embs, group_ids, dimension_name, emo_contri_dimN[emo])
         print("emo:{}".format(emo))
-        print("psddim_fpValue_reject_sort_topContrb:")
+        print("dim_fpValue_name")
         print(*psddim_fpValue_reject_sort_topContrb, sep="\n")
-        print("cls_contribDim_value:")
+        print("cls_contribDim_mean:")
         print(cls_contribDim_value)
-
 #---------------------------Util------------------------#
-
-opensmile_features = opensmile.FeatureSet.GeMAPSv01a
-opensmile_functional = opensmile.FeatureLevel.Functionals
-
-def extract_opensmile(wav_dir, out_dir):
-    print("smile extraction started!")
-    Path(out_dir).mkdir(parents=True, exist_ok=True)
-    smile = opensmile.Smile(
-        feature_set=opensmile_features,
-        feature_level=opensmile_functional,
-    )
-    dir_path = Path(wav_dir)
-    for audio_f in dir_path.rglob("*.wav"):
-        psd_reps = smile.process_file(audio_f)
-        psd_reps = psd_reps.squeeze(0)
-        audio_name = audio_f.stem
-        np.save(os.path.join(out_dir, audio_name + ".npy"), psd_reps)
-    print("smile extraction finished!")
 
 
 def get_emo_psdId_dict(psd_reps_dir, id_emo_dict):
@@ -304,18 +293,21 @@ def cluster_opensmilePSD_from_dict(emo_psdId_dict, emo_clusterN=emo_clusterN):
     """
     id_gid_dict = {}
     for emo, psd_id_dict in emo_psdId_dict.items():
-        print("{} audios in {}".format(len(psd_id_dict["psd"]), emo))
         grp_ids = get_kmeans_label(psd_id_dict["psd"], emo_clusterN[emo])
+        grp_ids_count = dict(Counter(grp_ids))
+        one_element_cluster = [k for k, v in grp_ids_count.items() if v == 1]
+
+        if len(one_element_cluster) > 0:
+            one_element_id = psd_id_dict["id"][np.where(grp_ids == one_element_cluster[0])[0]]
+            print("{}: Total {}, Cluster_distr:{}, one_element_id:{}".format(emo,
+                                                                             len(psd_id_dict["psd"]),
+                                                                             grp_ids_count,
+                                                                             one_element_id))
+        else:
+            print("{}: Total {}, Cluster_distr:{}".format(emo, len(psd_id_dict["psd"]), grp_ids_count))
         for i, id in enumerate(psd_id_dict["id"]):
             g_id = grp_ids[i]
             id_gid_dict[id] = g_id
-            """
-            if g_id not in emo_group_psdID_dict[emo].keys():
-                g_id = str(g_id)
-                emo_group_psdID_dict[emo][g_id] = {}
-                emo_group_psdID_dict[emo][g_id]["psd"] = []
-            emo_group_psdID_dict[emo][g_id]["psd"].append(psd_id_dict["psd"][i])
-            """
     return id_gid_dict
 
 def check_emo_group():
@@ -367,7 +359,7 @@ if __name__ == '__main__':
     parser.add_argument("--prepare_features", type=bool, default=False)
     parser.add_argument("--get_optimal_clusterN", type=bool, default=False)
     parser.add_argument("--check_contrib_dims", type=bool, default=False)
-    parser.add_argument("--prepare_groups", type=bool, default=False)
+    parser.add_argument("--prepare_groups", type=bool, default=True)
     args = parser.parse_args()
     if args.prepare_features:
         prepare_esd()
@@ -375,11 +367,15 @@ if __name__ == '__main__':
         optimal_ks = get_optimal_grpNum(psd_reps, meta_json, de_rate=0.16)
         print(optimal_ks)
     if args.check_contrib_dims:
-        check_contribute_score(psd_reps, meta_json, emo_optimal_clusterN, emo_contri_dimN)
+        check_contribute_score(psd_reps, meta_json, emo_optimal_clusterN_test, emo_contri_dimN)
     if args.prepare_groups:
         out_dir = "/home/rosen/project/FastSpeech2/ESD"
+        cluster_N = emo_optimal_clusterN
+        out_meta = "metadata_{}.json".format("".join([str(cn) for cn in list(cluster_N.values())]))
         prepare_grp_id(
             data_dir=out_dir,
             psd_extract=False,
-            emo_clusterN=emo_optimal_clusterN
+            emo_clusterN=emo_optimal_clusterN,
+            out_meta=out_meta
         )
+        check_contribute_score(psd_reps, meta_json, cluster_N, cluster_N)

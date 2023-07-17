@@ -6,13 +6,9 @@ import os
 from utils.iiv_utils import mean_embedding_per_emo, mean_embedding_per_grp, get_anchors
 
 class IIVMiner:
-    """
-
-    """
     def __init__(self,
-                 data_path=None,
                  inter_margin=0.2,
-                 intra_margin=0.1,
+                 intra_margin=0.2,
                  inter_distance=distances.CosineSimilarity(),
                  intra_distance=distances.CosineSimilarity(),
                  inter_type_of_triplets="semihard",
@@ -20,10 +16,10 @@ class IIVMiner:
                  choose_anchor=False,
                  **kwargs):
         self.inter_miner = miners.TripletMarginMiner(margin=inter_margin,
-                                                    distance=inter_distance,
-                                                    type_of_triplets=inter_type_of_triplets,
-                                                    **kwargs
-                                                    )
+                                                     distance=inter_distance,
+                                                     type_of_triplets=inter_type_of_triplets,
+                                                     **kwargs
+                                                     )
 
         self.intra_miner = miners.TripletMarginMiner(margin=intra_margin,
                                                      distance=intra_distance,
@@ -49,8 +45,9 @@ class IIVMiner:
             inter_indices_tuple: tuple(3, sample_num)
             intra_indices_tuple_dict: dict(emo_n, tuple(Tensor: (grp_n, emb_dim), Tensor: (grp_n,)))
         """
-        emos = torch.unique(ref_emb)
+        emos = torch.unique(ref_inter_labels)
         intra_indices_tuple_dict = {}
+        intra_mask_dict = {}
 
         if self.choose_achor:
             # Choose anchor
@@ -71,11 +68,11 @@ class IIVMiner:
                     intra_indices_tuple = self.intra_miner(grp_anchors, grp_anchor_labs,
                                     ref_grp_embs, ref_intra_labs)       # tuple(3, sample_num)
                     intra_indices_tuple_dict[emo] = intra_indices_tuple # dict(emo_num, tuple(3, sample_num))
+                intra_mask_dict[emo] = emo_mask
         else:
             inter_indices_tuple = self.inter_miner(
                 ref_emb, ref_inter_labels
             )  # tuple(3, sample_num)
-
             for emo in emos:
                 emo_mask = ref_inter_labels == emo
                 if torch.any(emo_mask):
@@ -83,4 +80,5 @@ class IIVMiner:
                     ref_intra_labs = ref_intra_labels[emo_mask]
                     intra_indices_tuple = self.intra_miner(ref_grp_embs, ref_intra_labs)  # tuple(3, sample_num)
                     intra_indices_tuple_dict[emo] = intra_indices_tuple  # dict(emo_num, tuple(3, sample_num))
-        return inter_indices_tuple, intra_indices_tuple_dict
+                    intra_mask_dict[emo] = emo_mask
+        return inter_indices_tuple, intra_indices_tuple_dict, intra_mask_dict
