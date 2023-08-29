@@ -37,11 +37,14 @@ python3 prepare_align.py config/LJSpeech/preprocess.yaml
   ```
   python3 preprocess.py config/LJSpeech/preprocess.yaml
   ```
-- Get mel, energy, duration, pitch given wav and textGrid.
-  - mel is get by con1d ?
-  - Wav is segmented by phoneme, given by textGrid
-  - pitch extracted by pw.dio from segmented wav
-  - energy extracted by the amptitude of mel from segmented wav
+- Get mel, energy, duration, pitch 
+  - IN: wav_dir, textGrid_dir.
+  - OUT: mel, pitch, energy, duration
+  - Method:
+    - mel is get by con1d ?
+    - pitch extracted by pw.dio from segmented wav
+    - energy extracted by the amptitude of mel from segmented wav
+    - duration is given by textgrid file
 ```
 python3 preprocess.py config/ESD/preprocess.yaml
 ```

@@ -117,7 +117,6 @@ if __name__ == '__main__':
             text_type="text50",
             model_version=model_f
         )
-
     if False:
         coutour_iiv_cross_attention(
             iiv_type="mean",
