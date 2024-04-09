@@ -19,6 +19,7 @@ from evaluate import evaluate, evaluate_fastIIV
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+SYN_IIV_EMBS = False
 
 iiv_embs = {
     "Neutral": {
@@ -109,7 +110,7 @@ def main(args, configs):
                 batch = to_device(batch, device)
 
                 # Forward
-                output, att_score = model(*(batch[2:]))
+                output = model(*(batch[2:]))
 
                 # Cal Loss
                 losses = Loss(batch, output)
@@ -175,36 +176,37 @@ def main(args, configs):
                     audio_path = "/home/rosen/project/FastSpeech2/exp_res/{}".format(tag_syn)
                     write(audio_path, 16000, wav_prediction)
 
-                    for emo, grp_iiv in iiv_embs.items():
-                        for grp, iiv in grp_iiv.items():
-                            iiv_embs_torch = torch.from_numpy(np.load(os.path.join(iiv_embs_dir, iiv))).\
-                                to(device).expand(batch_size, -1)
-                            output_iiv, att_score = model(*(batch[2:-1]), style_emb=iiv_embs_torch)
-                            fig_iiv, wav_prediction_iiv, tag = synth_one_sample_iiv(
-                                batch,
-                                output_iiv,
-                                vocoder,
-                                model_config,
-                                preprocess_config,
-                            )
-                            log(
-                                train_logger,
-                                fig=fig_iiv,
-                                tag="Training/step_{}_{}_{}_{}".format(step, tag, emo, grp),
-                            )
+                    if SYN_IIV_EMBS:
+                        for emo, grp_iiv in iiv_embs.items():
+                            for grp, iiv in grp_iiv.items():
+                                iiv_embs_torch = torch.from_numpy(np.load(os.path.join(iiv_embs_dir, iiv))).\
+                                    to(device).expand(batch_size, -1)
+                                output_iiv, att_score = model(*(batch[2:-1]), style_emb=iiv_embs_torch)
+                                fig_iiv, wav_prediction_iiv, tag = synth_one_sample_iiv(
+                                    batch,
+                                    output_iiv,
+                                    vocoder,
+                                    model_config,
+                                    preprocess_config,
+                                )
+                                log(
+                                    train_logger,
+                                    fig=fig_iiv,
+                                    tag="Training/step_{}_{}_{}_{}".format(step, tag, emo, grp),
+                                )
 
-                            sampling_rate = preprocess_config["preprocessing"]["audio"][
-                                "sampling_rate"
-                            ]
-                            tag_ivv = "Training/step_{}_{}_{}_{}_synthesized".format(step, tag, emo, grp)
-                            log(
-                                train_logger,
-                                audio=wav_prediction_iiv,
-                                sampling_rate=sampling_rate,
-                                tag=tag_ivv,
-                            )
-                            audio_path = "/home/rosen/project/FastSpeech2/exp_res/{}".format(tag_ivv)
-                            write(audio_path, 16000, wav_prediction_iiv)
+                                sampling_rate = preprocess_config["preprocessing"]["audio"][
+                                    "sampling_rate"
+                                ]
+                                tag_ivv = "Training/step_{}_{}_{}_{}_synthesized".format(step, tag, emo, grp)
+                                log(
+                                    train_logger,
+                                    audio=wav_prediction_iiv,
+                                    sampling_rate=sampling_rate,
+                                    tag=tag_ivv,
+                                )
+                                audio_path = "/home/rosen/project/FastSpeech2/exp_res/{}".format(tag_ivv)
+                                write(audio_path, 16000, wav_prediction_iiv)
 
                 if step % val_step == 0:
                     model.eval()
@@ -238,24 +240,24 @@ def main(args, configs):
 
 
 if __name__ == "__main__":
-    config_dir = "/home/rosen/project/FastSpeech2/config/ESD"
+    config_dir = "/home/rosen/Project/FastSpeech2/config/ESD"
     parser = argparse.ArgumentParser()
-    parser.add_argument("--restore_step", type=int, default=250000)
+    parser.add_argument("--restore_step", type=int, default=0)
     parser.add_argument(
         "-p",
         "--preprocess_config",
         type=str,
         #required=True,
         help="path to preprocess.yaml",
-        default=config_dir + "/preprocess_iiv.yaml",
-        #default=config_dir + "/preprocess.yaml"
+        #default=config_dir + "/preprocess_iiv.yaml",
+        default=config_dir + "/preprocess.yaml"
     )
     parser.add_argument(
         "-m", "--model_config", type=str,
         #required=True,
         help="path to model.yaml",
-        default=config_dir + "/model_fastspeechIIV.yaml"
-        #default=config_dir + "/model.yaml"
+        #default=config_dir + "/model_fastspeechIIV.yaml"
+        default=config_dir + "/model.yaml"
     )
     parser.add_argument(
         "-t", "--train_config", type=str,

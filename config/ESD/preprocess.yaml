@@ -1,11 +1,11 @@
 dataset: "ESD"
 
 path:
-  corpus_path: "/home/rosen/project/FastSpeech2/ESD"
+  corpus_path: "/home/rosen/Project/FastSpeech2/ESD"
   wav_dir: "16k_wav"
   lexicon_path: "lexicon/librispeech-lexicon.txt"
-  raw_path: "/home/rosen/project/FastSpeech2/raw_data/ESD"
-  preprocessed_path: "/home/rosen/project/FastSpeech2/preprocessed_data/ESD"
+  raw_path: "/home/rosen/Project/FastSpeech2/raw_data/ESD"
+  preprocessed_path: "/home/rosen/Project/FastSpeech2/preprocessed_data/ESD"
   #preprocessed_path: "/Users/luoxuan/Desktop/ESD"
 
 preprocessing:

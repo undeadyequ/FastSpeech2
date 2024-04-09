@@ -15,6 +15,8 @@ variance_predictor:
   kernel_size: 3
   dropout: 0.5
 
+model_name: "FastSpeech2"  # support FastSpeech2 and FastSpeech2_iiv
+
 variance_embedding:
   pitch_quantization: "linear" # support 'linear' or 'log', 'log' is allowed only if the pitch values are not normalized during preprocessing
   energy_quantization: "linear" # support 'linear' or 'log', 'log' is allowed only if the energy values are not normalized during preprocessing
