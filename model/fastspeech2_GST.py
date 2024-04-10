@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from transformer import Encoder, Decoder, PostNet
 from .modules import VarianceAdaptor
 from utils.tools import get_mask_from_lengths
-
+from model.style_encoder import StyleEncoder, StyleSequenceEncoder
 
 class FastSpeech2_GST(nn.Module):
     """ FastSpeech2 """
@@ -39,25 +39,17 @@ class FastSpeech2_GST(nn.Module):
                 n_speaker,
                 model_config["transformer"]["encoder_hidden"],
             )
-        if "style_emb" in model_config.keys():
-            if model_config["style_emb"] == "GST":
-                self.style_emb = StyleEncoder(
-                    idim=odim,  # the input is mel-spectrogram
-                    gst_tokens=gst_tokens,
-                    gst_token_dim=eunits,
-                    gst_heads=gst_heads,
-                    conv_layers=gst_conv_layers,
-                    conv_chans_list=gst_conv_chans_list,
-                    conv_kernel_size=gst_conv_kernel_size,
-                    conv_stride=gst_conv_stride,
-                    gru_layers=gst_gru_layers,
-                    gru_units=gst_gru_units,
-                )
-            elif model_config["style_emb"] == "Some":
-                self.style_emb = ""
-            else:
-                IOError("Please choose style_emb in {}, {}".format("gst", "??"))
+        if "gst" in model_config.keys():
+            self.style_emb = StyleEncoder(
+                model_config
+            )
+        elif "gst" in model_config["style_emb"]:
+            self.style_emb = StyleSequenceEncoder(
+                model_config
 
+            )
+        else:
+            self.style_emb = None
 
     def forward(
         self,
@@ -91,8 +83,13 @@ class FastSpeech2_GST(nn.Module):
             )
 
         # append gst to text encoding
-        if
-
+        if self.style_emb is not None:
+            style_embs = self.style_emb(mels)
+            if len(style_embs.shape) == 3:
+                style_embs = style_embs.unsqueeze(1).expand(
+                -1, max_src_len, -1
+            )
+            output = output * style_embs
         (
             output,
             p_predictions,

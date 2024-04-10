@@ -13,6 +13,56 @@ from model.style_encoder_attention  import (
 )
 
 
+class StyleSequenceEncoder(torch.nn.Module):
+    """
+    From paper: MsEmoTTS: Multi-scale emotion transfer,
+    prediction, and control for emotional speech synthesis
+
+    Specifically, the utterance variation encoder consists of two 1d convolution
+layers followed by layer normalization and dropout. Mean
+pooling at the time axis is applied on the output to obtain a vector representation for the utterance emotion variation
+    """
+    def __init__(self, model_config):
+        super(StyleSequenceEncoder, self).__init__()
+
+        conv_kernel_size = model_config[""]
+        conv_layers = model_config[""]
+        conv_chans_list = model_config[""]
+        conv_stride = model_config[""]
+
+        convs = []
+        padding = (conv_kernel_size - 1) // 2
+        for i in range(conv_layers):
+            conv_in_chans = 1 if i == 0 else conv_chans_list[i - 1]
+            conv_out_chans = conv_chans_list[i]
+            convs += [
+                torch.nn.Conv1d(
+                    conv_in_chans,
+                    conv_out_chans,
+                    kernel_size=conv_kernel_size,
+                    stride=conv_stride,
+                    padding=padding,
+                    bias=False
+                ),
+                torch.nn.LayerNorm(conv_out_chans),
+                torch.nn.MaxPool1d(kernel_size=5, stride=2, padding=0)
+            ]
+        self.convs = torch.nn.Sequential(*convs)
+
+    def forward(self, speech):
+        """
+
+        Args:
+            speech (b, l, d):
+
+        Returns:
+
+        """
+        hs = self.convs(speech)
+        return hs
+
+
+
 class StyleEncoder(torch.nn.Module):
     """Style encoder.
 
@@ -43,18 +93,20 @@ class StyleEncoder(torch.nn.Module):
     """
 
     def __init__(
-        self,
-        idim: int = 80,
-        gst_tokens: int = 10,
-        gst_token_dim: int = 256,
-        gst_heads: int = 4,
-        conv_layers: int = 6,
-        conv_chans_list: Sequence[int] = (32, 32, 64, 64, 128, 128),
-        conv_kernel_size: int = 3,
-        conv_stride: int = 2,
-        gru_layers: int = 1,
-        gru_units: int = 128,
+            self,
+            model_config
     ):
+        idim = model_config["gst"]["idim"]
+        gst_tokens = model_config["gst"]["gst_tokens"]
+        gst_token_dim = model_config["gst"]["gst_token_dim"]
+        gst_heads = model_config["gst"]["gst_heads"]
+        conv_layers = model_config["gst"]["conv_layers"]
+        conv_chans_list = model_config["gst"]["conv_chans_list"]
+        conv_kernel_size = model_config["gst"]["conv_kernel_size"]
+        conv_stride = model_config["gst"]["conv_stride"]
+        gru_layers = model_config["gst"]["gru_layers"]
+        gru_units = model_config["gst"]["gru_units"]
+
         """Initilize global style encoder module."""
         assert check_argument_types()
         super(StyleEncoder, self).__init__()
